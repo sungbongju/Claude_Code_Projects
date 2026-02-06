@@ -1,164 +1,317 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GradMate</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet" />
-  <style>
-    :root {
-      --bg: #fafafa;
-      --surface: #ffffff;
-      --border: #e8e8e8;
-      --text-primary: #111111;
-      --text-secondary: #555555;
-      --text-tertiary: #999999;
-      --accent: #1a56db;
-      --accent-light: #e8effc;
-      --success: #16a34a;
-      --success-light: #dcfce7;
-      --warning: #d97706;
-      --warning-light: #fef3c7;
-      --danger: #dc2626;
-      --danger-light: #fee2e2;
-      --radius: 10px;
-      --radius-sm: 6px;
-    }
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
-    body { background:var(--bg); color:var(--text-primary); }
-    ::-webkit-scrollbar { width:4px; }
-    ::-webkit-scrollbar-track { background:transparent; }
-    ::-webkit-scrollbar-thumb { background:#ddd; border-radius:4px; }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-    .fu { animation:fadeUp .35s ease-out both; }
-    .fu1{animation-delay:.04s} .fu2{animation-delay:.08s} .fu3{animation-delay:.12s} .fu4{animation-delay:.16s} .fu5{animation-delay:.2s}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GradMate</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet"/>
+<style>
+:root{--bg:#fafafa;--surface:#fff;--border:#e8e8e8;--bh:#d0d0d0;--tp:#111;--ts:#555;--tt:#999;--accent:#1a56db;--al:#e8effc;--success:#16a34a;--sl:#dcfce7;--warning:#d97706;--wl:#fef3c7;--danger:#dc2626;--dl:#fee2e2;--r:10px;--rs:6px}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--tp)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#ddd;border-radius:4px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fadeUp .3s ease-out both}.fu1{animation-delay:.03s}.fu2{animation-delay:.06s}.fu3{animation-delay:.09s}.fu4{animation-delay:.12s}.fu5{animation-delay:.15s}
+input,select,textarea{font-family:inherit}
+button{font-family:inherit}
+</style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const {useState,useEffect,useRef}=React;
+const {useState,useEffect,useRef,useCallback}=React;
 
-/* ── Icons (inline SVG) ── */
+/* ── Icons ── */
 const I={
   activity:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
   book:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
   sparkle:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3z"/></svg>,
+  settings:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
   check:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+  plus:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+  trash:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
+  edit:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
   send:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
   chat:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
   x:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+  download:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+  upload:<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>,
+  clock:<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
 };
 
-/* ── Data ── */
-const courses=[
-  {id:1,name:'융합연구방법론(AI)',cr:3,cat:'공통필수',grade:'A+',prof:'박대근',when:'목 09:00',where:'미래관316'},
-  {id:2,name:'AI응용사례연구Ⅰ',cr:2,cat:'전공선택',grade:'A0',prof:'정경인',when:'금 10:00',where:''},
-  {id:3,name:'펨테크디지털헬스케어 인턴십',cr:1,cat:'인턴십',grade:'P',prof:'한현욱',when:'월 12:00',where:'',pf:true},
-  {id:4,name:'의료인공지능',cr:3,cat:'공통필수',grade:'A0',prof:'조백환',when:'수 13:00',where:'차바이오컴플렉스 B205'},
-  {id:5,name:'인공지능을 활용한 시계열 예측',cr:3,cat:'전공선택',grade:'A+',prof:'박대근',when:'목 13:00',where:'미래관509'},
-];
-
-const sched=[
-  {d:'02.04–06',l:'1학기 수강신청',u:true,n:'진행 중'},
-  {d:'02.11',l:'동계 학위수여식',u:false,n:''},
-  {d:'02.23–27',l:'등록금 납부',u:true,n:''},
-  {d:'03월 초',l:'1학기 개강',u:false,n:''},
-];
-
-const recs=[
-  {name:'헬스케어 경영(AI)',cr:3,t:'전공선택',note:'2025-2 개설 미이수 과목'},
-  {name:'실감콘텐츠 기획과 제작(AI)',cr:3,t:'전공선택',note:'HeyGen 아바타 프로젝트 연계 가능'},
-  {name:'연구지도 I',cr:3,t:'연구지도',note:'자격시험 합격 후 연구계획서 제출 → 차기학기 수강',imp:true},
-];
-
-/* ── Small Components ── */
+/* ── Shared UI ── */
 const Tag=({children,color='default'})=>{
-  const m={default:{bg:'#f0f0f0',c:'#555'},accent:{bg:'var(--accent-light)',c:'var(--accent)'},success:{bg:'var(--success-light)',c:'var(--success)'},warning:{bg:'var(--warning-light)',c:'var(--warning)'},danger:{bg:'var(--danger-light)',c:'var(--danger)'}};
+  const m={default:{bg:'#f0f0f0',c:'#555'},accent:{bg:'var(--al)',c:'var(--accent)'},success:{bg:'var(--sl)',c:'var(--success)'},warning:{bg:'var(--wl)',c:'var(--warning)'},danger:{bg:'var(--dl)',c:'var(--danger)'}};
   const s=m[color]||m.default;
-  return <span style={{display:'inline-flex',padding:'2px 8px',borderRadius:4,fontSize:11,fontWeight:500,lineHeight:'18px',background:s.bg,color:s.c}}>{children}</span>;
+  return <span style={{display:'inline-flex',padding:'2px 8px',borderRadius:4,fontSize:11,fontWeight:500,lineHeight:'18px',background:s.bg,color:s.c,whiteSpace:'nowrap'}}>{children}</span>;
 };
-
-const Bar=({v,max,color='var(--accent)'})=>{
-  const p=Math.min(v/max*100,100);
-  return <div style={{height:4,background:'#ebebeb',borderRadius:2,overflow:'hidden'}}><div style={{height:'100%',width:`${p}%`,background:color,borderRadius:2,transition:'width .6s ease'}}/></div>;
-};
-
-const Card=({children,style,className=''})=><div className={className} style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--radius)',...style}}>{children}</div>;
+const Bar=({v,max,color='var(--accent)'})=><div style={{height:4,background:'#ebebeb',borderRadius:2,overflow:'hidden'}}><div style={{height:'100%',width:`${Math.min(v/max*100,100)}%`,background:color,borderRadius:2,transition:'width .6s ease'}}/></div>;
+const Card=({children,style,className=''})=><div className={className} style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--r)',...style}}>{children}</div>;
 const Div=()=><div style={{height:1,background:'var(--border)'}}/>;
+const Btn=({children,onClick,variant='default',style:st,...props})=>{
+  const styles={
+    default:{padding:'7px 14px',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rs)',fontSize:13,fontWeight:500,cursor:'pointer',color:'var(--tp)',display:'inline-flex',alignItems:'center',gap:6},
+    accent:{padding:'7px 14px',background:'var(--accent)',border:'none',borderRadius:'var(--rs)',fontSize:13,fontWeight:500,cursor:'pointer',color:'#fff',display:'inline-flex',alignItems:'center',gap:6},
+    danger:{padding:'7px 14px',background:'var(--dl)',border:'none',borderRadius:'var(--rs)',fontSize:13,fontWeight:500,cursor:'pointer',color:'var(--danger)',display:'inline-flex',alignItems:'center',gap:6},
+    ghost:{padding:'4px 8px',background:'none',border:'none',borderRadius:'var(--rs)',fontSize:12,cursor:'pointer',color:'var(--tt)',display:'inline-flex',alignItems:'center',gap:4},
+  };
+  return <button onClick={onClick} style={{...styles[variant],...st}} {...props}>{children}</button>;
+};
+const Input=({label,...props})=>(
+  <div style={{display:'flex',flexDirection:'column',gap:4}}>
+    {label&&<label style={{fontSize:12,fontWeight:500,color:'var(--ts)'}}>{label}</label>}
+    <input {...props} style={{padding:'8px 12px',border:'1px solid var(--border)',borderRadius:'var(--rs)',fontSize:13,outline:'none',background:'var(--bg)',width:'100%',...(props.style||{})}}/>
+  </div>
+);
+const Select=({label,children,...props})=>(
+  <div style={{display:'flex',flexDirection:'column',gap:4}}>
+    {label&&<label style={{fontSize:12,fontWeight:500,color:'var(--ts)'}}>{label}</label>}
+    <select {...props} style={{padding:'8px 12px',border:'1px solid var(--border)',borderRadius:'var(--rs)',fontSize:13,outline:'none',background:'var(--bg)',width:'100%',...(props.style||{})}}>{children}</select>
+  </div>
+);
+
+/* ── Modal ── */
+const Modal=({open,onClose,title,children})=>{
+  if(!open)return null;
+  return(
+    <div style={{position:'fixed',inset:0,zIndex:200,display:'flex',alignItems:'flex-end',justifyContent:'center'}} onClick={onClose}>
+      <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.3)'}}/>
+      <div onClick={e=>e.stopPropagation()} style={{position:'relative',width:'100%',maxWidth:480,maxHeight:'85vh',background:'var(--surface)',borderRadius:'16px 16px 0 0',overflow:'auto',padding:0}}>
+        <div style={{padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid var(--border)',position:'sticky',top:0,background:'var(--surface)',zIndex:1}}>
+          <p style={{fontSize:15,fontWeight:600}}>{title}</p>
+          <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',color:'var(--tt)',padding:4}}>{I.x}</button>
+        </div>
+        <div style={{padding:'16px 20px 24px'}}>{children}</div>
+      </div>
+    </div>
+  );
+};
+
+/* ── Default Data ── */
+const defaultProfile={name:'',dept:'AI헬스케어융합학과',degree:'석사',admYear:'2025',admSem:'2',reqCredits:24,reqSemesters:4,reqGpa:3.0};
+const defaultMilestones={qualExam:'none',proposal:'none',defense:'none',presentation:'none'};
+const msLabels={qualExam:'자격시험',proposal:'연구계획서',defense:'학위논문 본심사',presentation:'학술발표'};
+const msOptions=[{v:'none',l:'미진행'},{v:'inprog',l:'진행 중'},{v:'done',l:'완료'}];
+
+const STORAGE_KEY='gradmate_data';
+const loadData=()=>{
+  try{const d=JSON.parse(localStorage.getItem(STORAGE_KEY));if(d&&d.version)return d;}catch{}
+  return null;
+};
+const defaultData={
+  version:1,
+  profile:defaultProfile,
+  courses:[
+    {id:'c1',sem:'2025-2',name:'융합연구방법론(AI)',cr:3,cat:'공통필수',grade:'A+',prof:'박대근',day:'목',time:'09:00',loc:'미래관316'},
+    {id:'c2',sem:'2025-2',name:'AI응용사례연구Ⅰ',cr:2,cat:'전공선택',grade:'A0',prof:'정경인',day:'금',time:'10:00',loc:''},
+    {id:'c3',sem:'2025-2',name:'펨테크디지털헬스케어 인턴십',cr:1,cat:'인턴십',grade:'P',prof:'한현욱',day:'월',time:'12:00',loc:''},
+    {id:'c4',sem:'2025-2',name:'의료인공지능',cr:3,cat:'공통필수',grade:'A0',prof:'조백환',day:'수',time:'13:00',loc:'차바이오컴플렉스 B205'},
+    {id:'c5',sem:'2025-2',name:'인공지능을 활용한 시계열 예측',cr:3,cat:'전공선택',grade:'A+',prof:'박대근',day:'목',time:'13:00',loc:'미래관509'},
+  ],
+  milestones:defaultMilestones,
+};
 
 /* ── App ── */
 function App(){
+  const [data,setData]=useState(()=>loadData()||defaultData);
   const [tab,setTab]=useState('overview');
+  const [modal,setModal]=useState(null); // 'profile','addCourse','editCourse','milestones','timetable','export'
+  const [editId,setEditId]=useState(null);
   const [chatOpen,setChatOpen]=useState(false);
-  const [msgs,setMsgs]=useState([{role:'ai',text:'안녕하세요. AI헬스케어융합학과 졸업요건에 대해 궁금한 점을 물어보세요.'}]);
+  const [msgs,setMsgs]=useState([{role:'ai',text:'안녕하세요. 졸업요건에 대해 궁금한 점을 물어보세요.'}]);
   const [ci,setCi]=useState('');
   const chatEnd=useRef(null);
+  const fileRef=useRef(null);
+
+  useEffect(()=>{localStorage.setItem(STORAGE_KEY,JSON.stringify(data))},[data]);
   useEffect(()=>{chatEnd.current?.scrollIntoView({behavior:'smooth'})},[msgs]);
 
-  const tc=12,gpa=3.87,sem=1;
-  const reqs=[
-    {l:'이수학점',cur:`${tc}`,tgt:'24학점',p:tc/24,ok:false,d:'공통·전공필수 포함'},
-    {l:'등록학기',cur:`${sem}`,tgt:'4학기',p:sem/4,ok:false,d:'3학기 남음'},
-    {l:'평점평균',cur:`${gpa}`,tgt:'3.0 이상',p:1,ok:true,d:'기준 충족'},
-    {l:'자격시험',cur:'미응시',tgt:'합격',p:0,ok:false,d:'15학점 이상 취득 후 응시'},
-    {l:'학위논문',cur:'미진행',tgt:'본심사 합격',p:0,ok:false,d:'연구계획서 → 심사위원 제청 → 본심사'},
-    {l:'학술발표',cur:'0편',tgt:'1편 이상',p:0,ok:false,d:'교내외 학술대회 (공동저자 이상)'},
-  ];
-  const overall=Math.round(Math.min(tc/24,1)*25+Math.min(sem/4,1)*20+(gpa>=3?15:0));
+  const update=(fn)=>setData(d=>{const n={...d};fn(n);return n;});
+  const {profile:pf,courses:cs,milestones:ms}=data;
 
+  /* Computed */
+  const totalCr=cs.reduce((s,c)=>s+c.cr,0);
+  const gradedCs=cs.filter(c=>c.grade&&c.grade!=='P'&&c.grade!=='NP');
+  const gradeMap={'A+':4.5,'A0':4.0,'B+':3.5,'B0':3.0,'C+':2.5,'C0':2.0,'D+':1.5,'D0':1.0,'F':0};
+  const gpa=gradedCs.length?Math.round(gradedCs.reduce((s,c)=>{const g=gradeMap[c.grade]||0;return s+g*c.cr},0)/gradedCs.reduce((s,c)=>s+c.cr,0)*100)/100:0;
+  const semesters=[...new Set(cs.map(c=>c.sem))].sort();
+  const semCount=semesters.length;
+  const msDone=(k)=>ms[k]==='done'?1:0;
+  const msPct=(k)=>ms[k]==='done'?1:ms[k]==='inprog'?0.5:0;
+  const overall=Math.round(
+    Math.min(totalCr/pf.reqCredits,1)*25+
+    Math.min(semCount/pf.reqSemesters,1)*20+
+    (gpa>=pf.reqGpa?15:0)+
+    msDone('qualExam')*15+
+    msDone('defense')*15+
+    msDone('presentation')*10
+  );
+
+  const reqs=[
+    {l:'이수학점',cur:`${totalCr}`,tgt:`${pf.reqCredits}학점`,p:totalCr/pf.reqCredits,ok:totalCr>=pf.reqCredits,d:'공통·전공필수 포함'},
+    {l:'등록학기',cur:`${semCount}`,tgt:`${pf.reqSemesters}학기`,p:semCount/pf.reqSemesters,ok:semCount>=pf.reqSemesters,d:`${Math.max(pf.reqSemesters-semCount,0)}학기 남음`},
+    {l:'평점평균',cur:`${gpa}`,tgt:`${pf.reqGpa} 이상`,p:gpa>=pf.reqGpa?1:gpa/pf.reqGpa,ok:gpa>=pf.reqGpa,d:gpa>=pf.reqGpa?'기준 충족':'기준 미달'},
+    {l:'자격시험',cur:msOptions.find(o=>o.v===ms.qualExam).l,tgt:'합격',p:msPct('qualExam'),ok:msDone('qualExam'),d:'15학점 이상 취득 후 응시'},
+    {l:'학위논문',cur:msOptions.find(o=>o.v===ms.defense).l,tgt:'본심사 합격',p:msPct('defense'),ok:msDone('defense'),d:'연구계획서 → 심사위원 제청 → 본심사'},
+    {l:'학술발표',cur:msOptions.find(o=>o.v===ms.presentation).l,tgt:'1편 이상',p:msPct('presentation'),ok:msDone('presentation'),d:'교내외 학술대회 (공동저자 이상)'},
+  ];
+
+  /* Course form state */
+  const emptyCourse={sem:'',name:'',cr:3,cat:'전공선택',grade:'',prof:'',day:'',time:'',loc:''};
+  const [cf,setCf]=useState(emptyCourse);
+  const openAdd=()=>{setCf({...emptyCourse,sem:semesters.length?semesters[semesters.length-1]:''});setModal('addCourse');};
+  const openEdit=(c)=>{setCf({...c});setEditId(c.id);setModal('editCourse');};
+  const saveCourse=()=>{
+    if(!cf.name.trim())return;
+    update(d=>{
+      if(editId){d.courses=d.courses.map(c=>c.id===editId?{...cf,id:editId}:c);}
+      else{d.courses=[...d.courses,{...cf,id:'c'+Date.now()}];}
+    });
+    setModal(null);setEditId(null);
+  };
+  const delCourse=(id)=>{update(d=>{d.courses=d.courses.filter(c=>c.id!==id)});};
+
+  /* Profile form */
+  const [pfForm,setPfForm]=useState(pf);
+  const openProfile=()=>{setPfForm({...pf});setModal('profile');};
+  const saveProfile=()=>{update(d=>{d.profile={...pfForm}});setModal(null);};
+
+  /* Export/Import */
+  const exportJSON=()=>{
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gradmate_backup.json';a.click();
+  };
+  const importJSON=(e)=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=(ev)=>{try{const d=JSON.parse(ev.target.result);if(d.version){setData(d);setModal(null);}}catch{alert('잘못된 파일입니다.')}};
+    r.readAsText(f);
+  };
+  const resetData=()=>{if(confirm('모든 데이터를 초기화합니다.')){setData(defaultData);setModal(null);}};
+
+  /* Chat */
   const handleChat=()=>{
     if(!ci.trim())return;
-    const q=ci.trim(); setCi('');
+    const q=ci.trim();setCi('');
     setMsgs(p=>[...p,{role:'user',text:q}]);
     setTimeout(()=>{
-      const i=q.toLowerCase(); let r='';
+      const i=q.toLowerCase();let r='';
       if(i.includes('졸업')&&(i.includes('요건')||i.includes('조건')))
-        r='AI헬스케어융합학과 석사과정 졸업요건 (수강편람 p.26~27)\n\n[수료 요건]\n· 등록학기: 4학기 이상\n· 이수학점: 24학점 이상\n· 교과목: 학과 지정 공통·전공필수 이수\n· 평점평균: 3.0(B0) 이상\n· 학술발표: 학위논문 제출 전 학술대회 1편 이상\n\n[학위수여 요건]\n1. 자격시험 합격\n2. 연구계획서 제출 및 심사위원 제청 승인\n3. 학위논문 본심사 합격\n4. 학술발표 요건 충족\n5. 학위논문 제출\n\n재적연한: 12학기 / 예비심사: 석사 비대상';
-      else if(i.includes('자격시험')||i.includes('자격 시험'))
-        r='자격시험 안내 (p.13, p.26)\n\n· 응시자격: 15학점 이상 취득\n· 시험과목: 학과 개설과목 중 2과목 (공통필수 1과목 포함)\n· 합격기준: 각 과목 70점 이상 (100점 만점)\n· 응시료: 과목당 30,000원\n· 시기: 매 학기 초 30일 이내\n\n합격해야 연구계획서 제출 및 연구지도 수강이 가능합니다.';
+        r='AI헬스케어융합학과 석사과정 졸업요건 (수강편람 p.26~27)\n\n[수료 요건]\n· 등록학기: 4학기 이상\n· 이수학점: 24학점 이상\n· 교과목: 학과 지정 공통·전공필수 이수\n· 평점평균: 3.0(B0) 이상\n· 학술발표: 학위논문 제출 전 학술대회 1편 이상\n\n[학위수여 요건]\n1. 자격시험 합격\n2. 연구계획서 제출 및 심사위원 제청 승인\n3. 학위논문 본심사 합격\n4. 학술발표 요건 충족\n5. 학위논문 제출\n\n재적연한: 12학기';
+      else if(i.includes('자격시험'))
+        r='자격시험 안내 (p.13, p.26)\n\n· 응시자격: 15학점 이상 취득\n· 시험과목: 학과 개설과목 중 2과목 (공통필수 1과목 포함)\n· 합격기준: 각 과목 70점 이상 (100점 만점)\n· 응시료: 과목당 30,000원\n\n합격해야 연구계획서 제출 가능';
       else if(i.includes('학술')&&(i.includes('발표')||i.includes('대회')))
-        r='학술발표 요건 (p.26)\n\nSCIE 논문이 아닌 학술대회 발표가 요건입니다.\n\n· 학위논문 제출 이전까지\n· 교내외 학술단체가 주관하는 학술대회에서\n· 1편 이상 논문 발표 (공동저자 이상)';
-      else if(i.includes('학점')&&(i.includes('부족')||i.includes('남은')||i.includes('더')))
-        r='현재 이수 현황\n\n· 이수학점: 12 / 24학점 (부족 12학점)\n· 등록학기: 1 / 4학기\n· 평점: 3.87 → 기준 충족\n· 공통필수: 융합연구방법론(AI), 의료인공지능 이수 완료\n\n매 학기 4학점씩이면 충분합니다.\n15학점 도달 시 자격시험 응시 가능합니다.';
+        r='학술발표 요건 (p.26)\n\n· 학위논문 제출 이전까지\n· 교내외 학술단체가 주관하는 학술대회에서\n· 1편 이상 논문 발표 (공동저자 이상)';
+      else if(i.includes('학점'))
+        r=`현재 이수 현황\n\n· 이수학점: ${totalCr} / ${pf.reqCredits}학점 (부족: ${Math.max(pf.reqCredits-totalCr,0)}학점)\n· 등록학기: ${semCount} / ${pf.reqSemesters}학기\n· 평점: ${gpa}\n\n15학점 이상 취득 시 자격시험 응시 가능`;
       else if(i.includes('수강신청'))
-        r='2026학년도 1학기 수강신청 (p.2~3, p.5)\n\n· 수강신청: 2026.02.04~06\n· 등록금 납부: 02.23~27\n· 개강: 3월 초\n\n유의: 학기당 12학점 초과 불가, 동일 과목 중복수강 학점 미인정';
+        r='2026학년도 1학기 수강신청\n\n· 수강신청: 2026.02.04~06\n· 등록금 납부: 02.23~27\n· 개강: 3월 초\n\n학기당 12학점 초과 불가';
       else if(i.includes('연구지도')||i.includes('연구계획서'))
-        r='연구계획서 & 연구지도 (p.5~6, p.13)\n\n· 자격시험 합격한 학기에 연구계획서 제출 가능\n· 연구지도: 승인 이후 차기 학기부터 수강\n· 순서: 연구지도I → 연구지도II → 개인연구지도\n· 학기당 1과목만 신청\n· 연구지도I: 3학점, 연구지도II: 3학점\n· 졸업 전 연구지도I 필수 이수';
-      else if(i.includes('개설')&&(i.includes('과목')||i.includes('교과')))
-        r='2025-2학기 개설 교과목 (p.26)\n\n[공통필수]\n· 융합연구방법론(AI) 3학점\n· 의료인공지능 3학점\n\n[전공선택]\n· 헬스케어 경영(AI) 3학점\n· 실감콘텐츠 기획과 제작(AI) 3학점\n· 인공지능을 활용한 시계열 예측 3학점\n· AI응용사례연구Ⅰ 2학점\n· 펨테크디지털헬스케어 인턴십 1학점';
-      else r='다음 키워드로 질문해 보세요.\n\n· 졸업요건 · 자격시험 · 학술발표\n· 남은 학점 · 수강신청 · 연구지도 · 개설 과목';
+        r='연구계획서 & 연구지도\n\n· 자격시험 합격한 학기에 연구계획서 제출 가능\n· 연구지도: 승인 이후 차기 학기부터 수강\n· 순서: 연구지도I → II → 개인연구지도\n· 학기당 1과목만, 졸업 전 연구지도I 필수';
+      else r='다음 키워드로 질문해 보세요.\n\n· 졸업요건 · 자격시험 · 학술발표\n· 남은 학점 · 수강신청 · 연구지도';
       setMsgs(p=>[...p,{role:'ai',text:r}]);
-    },400);
+    },300);
   };
 
-  /* ─ Overview ─ */
+  /* ── Course Form Modal ── */
+  const CourseForm=()=>(
+    <div style={{display:'flex',flexDirection:'column',gap:14}}>
+      <Input label="학기" placeholder="2025-2" value={cf.sem} onChange={e=>setCf({...cf,sem:e.target.value})}/>
+      <Input label="과목명" placeholder="과목명 입력" value={cf.name} onChange={e=>setCf({...cf,name:e.target.value})}/>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        <Input label="학점" type="number" min={1} max={12} value={cf.cr} onChange={e=>setCf({...cf,cr:parseInt(e.target.value)||0})}/>
+        <Select label="구분" value={cf.cat} onChange={e=>setCf({...cf,cat:e.target.value})}>
+          {['공통필수','전공필수','전공선택','인턴십','연구지도'].map(c=><option key={c}>{c}</option>)}
+        </Select>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        <Select label="성적" value={cf.grade} onChange={e=>setCf({...cf,grade:e.target.value})}>
+          <option value="">미입력</option>
+          {['A+','A0','B+','B0','C+','C0','D+','D0','F','P','NP'].map(g=><option key={g}>{g}</option>)}
+        </Select>
+        <Input label="교수" placeholder="교수명" value={cf.prof} onChange={e=>setCf({...cf,prof:e.target.value})}/>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
+        <Select label="요일" value={cf.day} onChange={e=>setCf({...cf,day:e.target.value})}>
+          <option value="">-</option>
+          {['월','화','수','목','금','토'].map(d=><option key={d}>{d}</option>)}
+        </Select>
+        <Input label="시간" placeholder="09:00" value={cf.time} onChange={e=>setCf({...cf,time:e.target.value})}/>
+        <Input label="강의실" placeholder="" value={cf.loc} onChange={e=>setCf({...cf,loc:e.target.value})}/>
+      </div>
+      <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:4}}>
+        <Btn onClick={()=>{setModal(null);setEditId(null)}}>취소</Btn>
+        <Btn variant="accent" onClick={saveCourse}>저장</Btn>
+      </div>
+    </div>
+  );
+
+  /* ── Timetable ── */
+  const Timetable=()=>{
+    const currentSem=semesters.length?semesters[semesters.length-1]:'';
+    const [sel,setSel]=useState(currentSem);
+    const semCs=cs.filter(c=>c.sem===sel&&c.day&&c.time);
+    const days=['월','화','수','목','금'];
+    const hours=Array.from({length:10},(_,i)=>i+9);
+    const getC=(day,h)=>semCs.find(c=>c.day===day&&parseInt(c.time)===h);
+    return(
+      <div>
+        <div style={{display:'flex',gap:6,marginBottom:14,overflowX:'auto'}}>
+          {semesters.map(s=>(
+            <button key={s} onClick={()=>setSel(s)} style={{padding:'5px 12px',fontSize:12,fontWeight:sel===s?600:400,background:sel===s?'var(--al)':'#f3f3f3',color:sel===s?'var(--accent)':'var(--ts)',border:'none',borderRadius:5,cursor:'pointer',whiteSpace:'nowrap'}}>{s}</button>
+          ))}
+        </div>
+        <div style={{overflowX:'auto'}}>
+          <div style={{display:'grid',gridTemplateColumns:'40px repeat(5,1fr)',fontSize:11,minWidth:360}}>
+            <div/>
+            {days.map(d=><div key={d} style={{textAlign:'center',fontWeight:600,padding:'6px 0',color:'var(--ts)'}}>{d}</div>)}
+            {hours.map(h=>(
+              <React.Fragment key={h}>
+                <div style={{textAlign:'right',paddingRight:8,paddingTop:4,color:'var(--tt)',fontSize:10}}>{h}:00</div>
+                {days.map(d=>{
+                  const c=getC(d,h);
+                  return(
+                    <div key={d+h} style={{minHeight:36,borderTop:'1px solid #f0f0f0',padding:2}}>
+                      {c&&<div style={{background:'var(--al)',color:'var(--accent)',borderRadius:4,padding:'3px 5px',fontSize:10,fontWeight:500,lineHeight:1.3}}>
+                        {c.name.length>10?c.name.slice(0,10)+'…':c.name}
+                        {c.loc&&<div style={{color:'var(--ts)',fontWeight:400,marginTop:1}}>{c.loc}</div>}
+                      </div>}
+                    </div>
+                  );
+                })}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  /* ── Overview Tab ── */
   const Overview=()=>(
     <div style={{display:'flex',flexDirection:'column',gap:14}}>
       <Card className="fu fu1" style={{padding:'20px 22px'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
           <div>
-            <p style={{fontSize:13,color:'var(--text-tertiary)',marginBottom:2}}>AI헬스케어융합학과 석사과정</p>
-            <p style={{fontSize:13,color:'var(--text-tertiary)'}}>2025 후기 입학 · 1학기 수료</p>
+            <p style={{fontSize:13,color:'var(--tt)',marginBottom:2}}>{pf.dept} {pf.degree}과정</p>
+            <p style={{fontSize:13,color:'var(--tt)'}}>{pf.admYear}학년도 {pf.admSem==='1'?'전기':'후기'} 입학{pf.name?` · ${pf.name}`:''}</p>
           </div>
           <div style={{textAlign:'right'}}>
-            <p style={{fontSize:28,fontWeight:700,letterSpacing:'-0.03em'}}>{overall}<span style={{fontSize:14,fontWeight:500,color:'var(--text-tertiary)'}}>%</span></p>
-            <p style={{fontSize:11,color:'var(--text-tertiary)'}}>졸업 진행률</p>
+            <p style={{fontSize:28,fontWeight:700,letterSpacing:'-0.03em'}}>{overall}<span style={{fontSize:14,fontWeight:500,color:'var(--tt)'}}>%</span></p>
+            <p style={{fontSize:11,color:'var(--tt)'}}>졸업 진행률</p>
           </div>
         </div>
         <div style={{marginTop:14}}><Bar v={overall} max={100}/></div>
-        <p style={{fontSize:12,color:'var(--text-tertiary)',marginTop:10}}>예상 졸업 2027.08 · 수료까지 3학기</p>
       </Card>
 
       <div className="fu fu2" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
-        {[{l:'이수학점',v:tc,s:'/24'},{l:'평점평균',v:gpa,s:'/4.5'},{l:'등록학기',v:sem,s:'/4'}].map((x,i)=>(
-          <Card key={i} style={{padding:'14px 14px'}}>
-            <p style={{fontSize:11,color:'var(--text-tertiary)',marginBottom:6}}>{x.l}</p>
-            <p style={{fontSize:22,fontWeight:700,letterSpacing:'-0.02em'}}>{x.v}<span style={{fontSize:12,fontWeight:400,color:'var(--text-tertiary)'}}>{x.s}</span></p>
+        {[{l:'이수학점',v:totalCr,s:`/${pf.reqCredits}`},{l:'평점평균',v:gpa,s:'/4.5'},{l:'등록학기',v:semCount,s:`/${pf.reqSemesters}`}].map((x,i)=>(
+          <Card key={i} style={{padding:'14px'}}>
+            <p style={{fontSize:11,color:'var(--tt)',marginBottom:6}}>{x.l}</p>
+            <p style={{fontSize:22,fontWeight:700,letterSpacing:'-0.02em'}}>{x.v}<span style={{fontSize:12,fontWeight:400,color:'var(--tt)'}}>{x.s}</span></p>
           </Card>
         ))}
       </div>
@@ -166,7 +319,7 @@ function App(){
       <Card className="fu fu3">
         <div style={{padding:'14px 20px 10px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <p style={{fontSize:14,fontWeight:600}}>졸업요건</p>
-          <span style={{fontSize:11,color:'var(--text-tertiary)'}}>수강편람 p.26–27</span>
+          <Btn variant="ghost" onClick={()=>setModal('milestones')}>{I.edit}<span>수정</span></Btn>
         </div>
         <Div/>
         <div style={{padding:'2px 0'}}>
@@ -177,11 +330,11 @@ function App(){
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:2}}>
-                  <span style={{fontSize:13,fontWeight:500,color:r.ok?'var(--success)':'var(--text-primary)'}}>{r.l}</span>
-                  <span style={{fontSize:12,color:'var(--text-tertiary)',flexShrink:0}}>{r.cur} / {r.tgt}</span>
+                  <span style={{fontSize:13,fontWeight:500,color:r.ok?'var(--success)':'var(--tp)'}}>{r.l}</span>
+                  <span style={{fontSize:12,color:'var(--tt)',flexShrink:0}}>{r.cur} / {r.tgt}</span>
                 </div>
                 <Bar v={r.p*100} max={100} color={r.ok?'var(--success)':'var(--accent)'}/>
-                <p style={{fontSize:11,color:'var(--text-tertiary)',marginTop:4}}>{r.d}</p>
+                <p style={{fontSize:11,color:'var(--tt)',marginTop:4}}>{r.d}</p>
               </div>
             </div>
           ))}
@@ -191,178 +344,174 @@ function App(){
       <Card className="fu fu4" style={{padding:'14px 20px'}}>
         <p style={{fontSize:14,fontWeight:600,marginBottom:12}}>학위취득 절차</p>
         <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
-          {['자격시험','연구계획서','심사위원 제청','본심사','학술발표','논문 제출'].map((s,i,a)=>(
+          {[{k:'qualExam',l:'자격시험'},{k:'proposal',l:'연구계획서'},{k:null,l:'심사위원 제청'},{k:'defense',l:'본심사'},{k:'presentation',l:'학술발표'},{k:null,l:'논문 제출'}].map((s,i,a)=>(
             <React.Fragment key={i}>
-              <span style={{fontSize:12,fontWeight:500,padding:'4px 10px',background:i===0?'var(--accent-light)':'#f5f5f5',color:i===0?'var(--accent)':'var(--text-secondary)',borderRadius:5}}>{s}</span>
+              <span style={{fontSize:12,fontWeight:500,padding:'4px 10px',background:s.k&&ms[s.k]==='done'?'var(--sl)':s.k&&ms[s.k]==='inprog'?'var(--wl)':'#f5f5f5',color:s.k&&ms[s.k]==='done'?'var(--success)':s.k&&ms[s.k]==='inprog'?'var(--warning)':'var(--ts)',borderRadius:5}}>{s.l}</span>
               {i<a.length-1&&<span style={{color:'#ccc',fontSize:11}}>→</span>}
             </React.Fragment>
           ))}
         </div>
       </Card>
-
-      <Card className="fu fu5">
-        <div style={{padding:'14px 20px 10px'}}><p style={{fontSize:14,fontWeight:600}}>일정</p></div>
-        <Div/>
-        {sched.map((s,i)=>(
-          <div key={i} style={{padding:'11px 20px',display:'flex',alignItems:'center',gap:14,borderBottom:i<sched.length-1?'1px solid var(--border)':'none'}}>
-            <span style={{fontSize:12,fontWeight:600,color:'var(--text-tertiary)',width:64,flexShrink:0}}>{s.d}</span>
-            <span style={{fontSize:13,fontWeight:500,flex:1}}>{s.l}</span>
-            {s.u&&<Tag color="danger">중요</Tag>}
-            {s.n&&<span style={{fontSize:11,color:'var(--accent)'}}>{s.n}</span>}
-          </div>
-        ))}
-      </Card>
     </div>
   );
 
-  /* ─ Courses ─ */
+  /* ── Courses Tab ── */
   const Courses=()=>{
-    const cc=c=>c==='공통필수'?'accent':c==='전공선택'?'default':'warning';
+    const catColor=c=>c==='공통필수'?'accent':c==='전공필수'?'accent':c==='전공선택'?'default':'warning';
     return(
       <div style={{display:'flex',flexDirection:'column',gap:14}}>
-        <Card className="fu fu1" style={{padding:'16px 20px'}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div>
-              <p style={{fontSize:14,fontWeight:600}}>2025학년도 2학기</p>
-              <p style={{fontSize:12,color:'var(--text-tertiary)',marginTop:2}}>12학점 · 평점 3.87</p>
-            </div>
-            <Tag color="accent">1학기째</Tag>
+        <div className="fu fu1" style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <p style={{fontSize:15,fontWeight:600}}>이수현황</p>
+          <div style={{display:'flex',gap:6}}>
+            <Btn onClick={()=>setModal('timetable')}>{I.clock}<span style={{fontSize:12}}>시간표</span></Btn>
+            <Btn variant="accent" onClick={openAdd}>{I.plus}<span style={{fontSize:12}}>과목 추가</span></Btn>
           </div>
-        </Card>
-
-        <div className="fu fu2" style={{padding:'10px 14px',background:'var(--success-light)',borderRadius:'var(--radius-sm)',border:'1px solid #bbf7d0'}}>
-          <p style={{fontSize:12,color:'var(--success)',fontWeight:500}}>공통필수 2과목 (융합연구방법론, 의료인공지능) 이수 완료</p>
         </div>
 
-        <Card className="fu fu3">
-          {courses.map((c,i)=>(
-            <React.Fragment key={c.id}>
-              <div style={{padding:'13px 20px',display:'flex',alignItems:'flex-start',gap:14}}>
-                <div style={{width:3,height:38,borderRadius:2,background:c.cat==='공통필수'?'var(--accent)':c.cat==='전공선택'?'#aaa':'var(--warning)',flexShrink:0,marginTop:2}}/>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:3}}>
-                    <Tag color={cc(c.cat)}>{c.cat}</Tag>
-                    <span style={{fontSize:11,color:'var(--text-tertiary)'}}>{c.cr}학점</span>
-                  </div>
-                  <p style={{fontSize:14,fontWeight:500,lineHeight:1.4}}>{c.name}</p>
-                  <p style={{fontSize:12,color:'var(--text-tertiary)',marginTop:3}}>{c.prof} · {c.when}{c.where?` · ${c.where}`:''}</p>
-                </div>
-                <div style={{textAlign:'right',flexShrink:0}}>
-                  <span style={{fontSize:16,fontWeight:700,color:c.grade==='P'?'var(--accent)':c.grade.startsWith('A')?'var(--success)':'var(--text-primary)'}}>{c.grade}</span>
-                  {c.pf&&<p style={{fontSize:10,color:'var(--text-tertiary)'}}>P/F</p>}
+        {semesters.map(sem=>{
+          const semCs=cs.filter(c=>c.sem===sem);
+          const semCr=semCs.reduce((s,c)=>s+c.cr,0);
+          return(
+            <Card key={sem} className="fu fu2">
+              <div style={{padding:'12px 20px 8px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div>
+                  <p style={{fontSize:14,fontWeight:600}}>{sem}</p>
+                  <p style={{fontSize:12,color:'var(--tt)',marginTop:1}}>{semCr}학점 · {semCs.length}과목</p>
                 </div>
               </div>
-              {i<courses.length-1&&<Div/>}
-            </React.Fragment>
-          ))}
-        </Card>
+              <Div/>
+              {semCs.map((c,i)=>(
+                <React.Fragment key={c.id}>
+                  <div style={{padding:'12px 20px',display:'flex',alignItems:'flex-start',gap:12}}>
+                    <div style={{width:3,height:36,borderRadius:2,background:c.cat.includes('필수')?'var(--accent)':c.cat==='전공선택'?'#aaa':'var(--warning)',flexShrink:0,marginTop:2}}/>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3,flexWrap:'wrap'}}>
+                        <Tag color={catColor(c.cat)}>{c.cat}</Tag>
+                        <span style={{fontSize:11,color:'var(--tt)'}}>{c.cr}학점</span>
+                      </div>
+                      <p style={{fontSize:13,fontWeight:500}}>{c.name}</p>
+                      <p style={{fontSize:11,color:'var(--tt)',marginTop:2}}>
+                        {[c.prof,c.day&&c.time?`${c.day} ${c.time}`:'',c.loc].filter(Boolean).join(' · ')}
+                      </p>
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+                      <span style={{fontSize:15,fontWeight:700,color:c.grade==='P'?'var(--accent)':c.grade?.startsWith('A')?'var(--success)':'var(--tp)'}}>{c.grade||'-'}</span>
+                      <Btn variant="ghost" onClick={()=>openEdit(c)}>{I.edit}</Btn>
+                      <Btn variant="ghost" onClick={()=>{if(confirm('삭제할까요?'))delCourse(c.id)}} style={{color:'var(--danger)'}}>{I.trash}</Btn>
+                    </div>
+                  </div>
+                  {i<semCs.length-1&&<Div/>}
+                </React.Fragment>
+              ))}
+            </Card>
+          );
+        })}
 
-        <Card className="fu fu4" style={{padding:'14px 20px'}}>
-          <p style={{fontSize:13,fontWeight:500}}>남은 이수 계획</p>
-          <p style={{fontSize:12,color:'var(--text-secondary)',marginTop:6,lineHeight:1.6}}>
-            졸업까지 12학점이 더 필요합니다. 매 학기 4학점씩 수강하면 4학기 내 수료 가능합니다. 15학점 이상 취득 시 자격시험 응시 자격이 됩니다.
-          </p>
-        </Card>
+        {cs.length===0&&(
+          <Card style={{padding:'40px 20px',textAlign:'center'}}>
+            <p style={{color:'var(--tt)',fontSize:13}}>아직 등록된 과목이 없습니다.</p>
+            <Btn variant="accent" onClick={openAdd} style={{marginTop:12}}>{I.plus} 과목 추가</Btn>
+          </Card>
+        )}
       </div>
     );
   };
 
-  /* ─ Recommend ─ */
-  const Recommend=()=>(
+  /* ── Settings Tab ── */
+  const Settings=()=>(
     <div style={{display:'flex',flexDirection:'column',gap:14}}>
-      <Card className="fu fu1" style={{padding:'16px 20px'}}>
-        <p style={{fontSize:14,fontWeight:600}}>2026-1학기 수강 추천</p>
-        <p style={{fontSize:12,color:'var(--text-secondary)',marginTop:4,lineHeight:1.5}}>
-          6~9학점 수강을 권장합니다. 15학점 도달 시 자격시험 응시가 가능합니다.
-        </p>
-      </Card>
+      <p className="fu fu1" style={{fontSize:15,fontWeight:600}}>설정</p>
 
-      <Card className="fu fu2" style={{padding:'18px 20px'}}>
-        <p style={{fontSize:14,fontWeight:600,marginBottom:16}}>추천 로드맵</p>
-        <div style={{display:'flex',flexDirection:'column',position:'relative'}}>
-          <div style={{position:'absolute',left:11,top:24,bottom:24,width:1,background:'var(--border)'}}/>
-          {[
-            {s:'2026-1학기',t:'2학기째',d:'6~9학점 수강 → 자격시험 응시 가능',a:true},
-            {s:'2026-2학기',t:'3학기째',d:'남은 학점 이수 + 연구계획서 제출'},
-            {s:'2027-1학기',t:'4학기째',d:'연구지도 I + 본심사 + 학술발표 → 졸업'},
-          ].map((r,i)=>(
-            <div key={i} style={{display:'flex',gap:14,padding:'10px 0',position:'relative',zIndex:1}}>
-              <div style={{width:22,height:22,borderRadius:'50%',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',background:r.a?'var(--accent)':'var(--surface)',border:r.a?'none':'2px solid var(--border)',color:r.a?'#fff':'var(--text-tertiary)',fontSize:11,fontWeight:600}}>{i+2}</div>
-              <div>
-                <p style={{fontSize:13,fontWeight:600}}>{r.s} <span style={{fontWeight:400,color:'var(--text-tertiary)'}}>· {r.t}</span></p>
-                <p style={{fontSize:12,color:'var(--text-secondary)',marginTop:2}}>{r.d}</p>
-              </div>
-            </div>
-          ))}
+      <Card className="fu fu2">
+        <div style={{padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',cursor:'pointer'}} onClick={openProfile}>
+          <div>
+            <p style={{fontSize:14,fontWeight:500}}>학생 정보</p>
+            <p style={{fontSize:12,color:'var(--tt)',marginTop:2}}>{pf.dept} · {pf.degree} · {pf.admYear}-{pf.admSem}</p>
+          </div>
+          <span style={{color:'var(--tt)'}}>{I.edit}</span>
+        </div>
+        <Div/>
+        <div style={{padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',cursor:'pointer'}} onClick={()=>setModal('milestones')}>
+          <div>
+            <p style={{fontSize:14,fontWeight:500}}>졸업요건 진행상태</p>
+            <p style={{fontSize:12,color:'var(--tt)',marginTop:2}}>자격시험, 연구계획서, 본심사, 학술발표</p>
+          </div>
+          <span style={{color:'var(--tt)'}}>{I.edit}</span>
         </div>
       </Card>
 
       <Card className="fu fu3">
-        <div style={{padding:'14px 20px 10px'}}><p style={{fontSize:14,fontWeight:600}}>추천 과목</p></div>
+        <div style={{padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',cursor:'pointer'}} onClick={exportJSON}>
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
+            <span style={{color:'var(--accent)'}}>{I.download}</span>
+            <p style={{fontSize:14,fontWeight:500}}>데이터 내보내기 (JSON)</p>
+          </div>
+        </div>
         <Div/>
-        {recs.map((r,i)=>(
-          <React.Fragment key={i}>
-            <div style={{padding:'13px 20px'}}>
-              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                <span style={{fontSize:14,fontWeight:500}}>{r.name}</span>
-                <Tag>{r.t}</Tag>
-                <span style={{fontSize:11,color:'var(--text-tertiary)'}}>{r.cr}학점</span>
-                {r.imp&&<Tag color="danger">필수</Tag>}
-              </div>
-              <p style={{fontSize:12,color:'var(--text-secondary)'}}>{r.note}</p>
-            </div>
-            {i<recs.length-1&&<Div/>}
-          </React.Fragment>
-        ))}
+        <div style={{padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',cursor:'pointer'}} onClick={()=>fileRef.current?.click()}>
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
+            <span style={{color:'var(--accent)'}}>{I.upload}</span>
+            <p style={{fontSize:14,fontWeight:500}}>데이터 불러오기 (JSON)</p>
+          </div>
+          <input ref={fileRef} type="file" accept=".json" onChange={importJSON} style={{display:'none'}}/>
+        </div>
+        <Div/>
+        <div style={{padding:'14px 20px',cursor:'pointer'}} onClick={resetData}>
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
+            <span style={{color:'var(--danger)'}}>{I.trash}</span>
+            <p style={{fontSize:14,fontWeight:500,color:'var(--danger)'}}>데이터 초기화</p>
+          </div>
+        </div>
       </Card>
+
+      <p className="fu fu4" style={{fontSize:11,color:'var(--tt)',textAlign:'center',marginTop:8}}>
+        데이터는 이 브라우저에 저장됩니다. JSON으로 백업해두세요.
+      </p>
     </div>
   );
 
-  /* ─ Chatbot ─ */
+  /* ── Chatbot ── */
   const Chat=()=>(
-    <div style={{position:'fixed',bottom:72,right:16,left:16,maxWidth:400,marginLeft:'auto',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--radius)',boxShadow:'0 12px 40px rgba(0,0,0,0.12)',display:'flex',flexDirection:'column',zIndex:100,overflow:'hidden',maxHeight:'70vh'}}>
+    <div style={{position:'fixed',bottom:72,right:16,left:16,maxWidth:400,marginLeft:'auto',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--r)',boxShadow:'0 12px 40px rgba(0,0,0,0.12)',display:'flex',flexDirection:'column',zIndex:100,overflow:'hidden',maxHeight:'70vh'}}>
       <div style={{padding:'13px 16px',display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid var(--border)'}}>
-        <div>
-          <p style={{fontSize:14,fontWeight:600}}>졸업요건 Q&A</p>
-          <p style={{fontSize:11,color:'var(--text-tertiary)'}}>수강편람 2025-2 기준</p>
-        </div>
-        <button onClick={()=>setChatOpen(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-tertiary)',padding:4}}>{I.x}</button>
+        <p style={{fontSize:14,fontWeight:600}}>졸업요건 Q&A</p>
+        <button onClick={()=>setChatOpen(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--tt)',padding:4}}>{I.x}</button>
       </div>
       <div style={{flex:1,overflowY:'auto',padding:14,display:'flex',flexDirection:'column',gap:8,minHeight:180,maxHeight:300}}>
         {msgs.map((m,i)=>(
           <div key={i} style={{display:'flex',justifyContent:m.role==='user'?'flex-end':'flex-start'}}>
-            <div style={{maxWidth:'85%',padding:'8px 12px',borderRadius:8,background:m.role==='user'?'var(--accent)':'#f3f3f3',color:m.role==='user'?'#fff':'var(--text-primary)',fontSize:13,lineHeight:1.6,whiteSpace:'pre-line'}}>{m.text}</div>
+            <div style={{maxWidth:'85%',padding:'8px 12px',borderRadius:8,background:m.role==='user'?'var(--accent)':'#f3f3f3',color:m.role==='user'?'#fff':'var(--tp)',fontSize:13,lineHeight:1.6,whiteSpace:'pre-line'}}>{m.text}</div>
           </div>
         ))}
         <div ref={chatEnd}/>
       </div>
       <div style={{padding:10,borderTop:'1px solid var(--border)'}}>
         <div style={{display:'flex',gap:8}}>
-          <input value={ci} onChange={e=>setCi(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleChat()} placeholder="질문을 입력하세요" style={{flex:1,padding:'8px 12px',border:'1px solid var(--border)',borderRadius:7,fontSize:13,outline:'none',background:'#fafafa'}}/>
+          <input value={ci} onChange={e=>setCi(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleChat()} placeholder="질문을 입력하세요" style={{flex:1,padding:'8px 12px',border:'1px solid var(--border)',borderRadius:7,fontSize:13,outline:'none',background:'var(--bg)'}}/>
           <button onClick={handleChat} style={{padding:'8px 12px',background:'var(--accent)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',display:'flex',alignItems:'center'}}>{I.send}</button>
         </div>
         <div style={{display:'flex',gap:6,marginTop:8,overflowX:'auto',paddingBottom:2}}>
-          {['졸업요건','자격시험','학술발표','남은 학점','수강신청'].map(q=>(
-            <button key={q} onClick={()=>setCi(q)} style={{whiteSpace:'nowrap',fontSize:11,padding:'4px 10px',background:'#f3f3f3',border:'1px solid var(--border)',borderRadius:5,cursor:'pointer',color:'var(--text-secondary)'}}>{q}</button>
+          {['졸업요건','자격시험','학술발표','남은 학점'].map(q=>(
+            <button key={q} onClick={()=>setCi(q)} style={{whiteSpace:'nowrap',fontSize:11,padding:'4px 10px',background:'#f3f3f3',border:'1px solid var(--border)',borderRadius:5,cursor:'pointer',color:'var(--ts)'}}>{q}</button>
           ))}
         </div>
       </div>
     </div>
   );
 
-  /* ─ Layout ─ */
+  /* ── Layout ── */
   return(
     <div style={{minHeight:'100vh',background:'var(--bg)'}}>
       <header style={{position:'sticky',top:0,zIndex:50,background:'rgba(250,250,250,0.85)',backdropFilter:'blur(12px)',borderBottom:'1px solid var(--border)'}}>
         <div style={{maxWidth:480,margin:'0 auto',padding:'12px 20px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
-            <div style={{width:28,height:28,borderRadius:7,background:'var(--text-primary)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <div style={{width:28,height:28,borderRadius:7,background:'var(--tp)',display:'flex',alignItems:'center',justifyContent:'center'}}>
               <span style={{color:'#fff',fontSize:13,fontWeight:700}}>G</span>
             </div>
             <span style={{fontSize:16,fontWeight:700,letterSpacing:'-0.03em'}}>GradMate</span>
           </div>
           <div style={{width:28,height:28,borderRadius:7,background:'#f0f0f0',display:'flex',alignItems:'center',justifyContent:'center'}}>
-            <span style={{fontSize:12,fontWeight:600,color:'var(--text-secondary)'}}>성</span>
+            <span style={{fontSize:12,fontWeight:600,color:'var(--ts)'}}>{pf.name?pf.name[0]:'?'}</span>
           </div>
         </div>
       </header>
@@ -370,24 +519,71 @@ function App(){
       <main style={{maxWidth:480,margin:'0 auto',padding:'14px 20px 100px'}}>
         {tab==='overview'&&<Overview/>}
         {tab==='courses'&&<Courses/>}
-        {tab==='recommend'&&<Recommend/>}
+        {tab==='settings'&&<Settings/>}
       </main>
 
-      {!chatOpen&&(
-        <button onClick={()=>setChatOpen(true)} style={{position:'fixed',bottom:76,right:20,width:46,height:46,borderRadius:13,background:'var(--text-primary)',border:'none',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 16px rgba(0,0,0,0.15)',zIndex:50}}>{I.chat}</button>
-      )}
+      {!chatOpen&&<button onClick={()=>setChatOpen(true)} style={{position:'fixed',bottom:76,right:20,width:46,height:46,borderRadius:13,background:'var(--tp)',border:'none',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 16px rgba(0,0,0,0.15)',zIndex:50}}>{I.chat}</button>}
       {chatOpen&&<Chat/>}
 
       <nav style={{position:'fixed',bottom:0,left:0,right:0,zIndex:50,background:'rgba(250,250,250,0.92)',backdropFilter:'blur(12px)',borderTop:'1px solid var(--border)'}}>
         <div style={{maxWidth:480,margin:'0 auto',display:'flex'}}>
-          {[{id:'overview',icon:I.activity,l:'개요'},{id:'courses',icon:I.book,l:'이수현황'},{id:'recommend',icon:I.sparkle,l:'추천'}].map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:'10px 0 12px',display:'flex',flexDirection:'column',alignItems:'center',gap:3,background:'none',border:'none',cursor:'pointer',color:tab===t.id?'var(--text-primary)':'var(--text-tertiary)',transition:'color .15s'}}>
+          {[{id:'overview',icon:I.activity,l:'개요'},{id:'courses',icon:I.book,l:'이수현황'},{id:'settings',icon:I.settings,l:'설정'}].map(t=>(
+            <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:'10px 0 12px',display:'flex',flexDirection:'column',alignItems:'center',gap:3,background:'none',border:'none',cursor:'pointer',color:tab===t.id?'var(--tp)':'var(--tt)',transition:'color .15s'}}>
               {t.icon}
               <span style={{fontSize:10,fontWeight:tab===t.id?600:400}}>{t.l}</span>
             </button>
           ))}
         </div>
       </nav>
+
+      {/* Modals */}
+      <Modal open={modal==='profile'} onClose={()=>setModal(null)} title="학생 정보 수정">
+        <div style={{display:'flex',flexDirection:'column',gap:14}}>
+          <Input label="이름" value={pfForm.name} onChange={e=>setPfForm({...pfForm,name:e.target.value})}/>
+          <Select label="학과" value={pfForm.dept} onChange={e=>setPfForm({...pfForm,dept:e.target.value})}>
+            {['AI헬스케어융합학과','의학과','간호학과','생명과학과','바이오융합과학과','약학과','고령친화산업학과'].map(d=><option key={d}>{d}</option>)}
+          </Select>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+            <Select label="과정" value={pfForm.degree} onChange={e=>setPfForm({...pfForm,degree:e.target.value})}>
+              {['석사','박사','석·박사통합'].map(d=><option key={d}>{d}</option>)}
+            </Select>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
+              <Input label="입학년도" value={pfForm.admYear} onChange={e=>setPfForm({...pfForm,admYear:e.target.value})}/>
+              <Select label="학기" value={pfForm.admSem} onChange={e=>setPfForm({...pfForm,admSem:e.target.value})}>
+                <option value="1">전기</option><option value="2">후기</option>
+              </Select>
+            </div>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
+            <Input label="졸업학점" type="number" value={pfForm.reqCredits} onChange={e=>setPfForm({...pfForm,reqCredits:parseInt(e.target.value)||24})}/>
+            <Input label="필요학기" type="number" value={pfForm.reqSemesters} onChange={e=>setPfForm({...pfForm,reqSemesters:parseInt(e.target.value)||4})}/>
+            <Input label="최소GPA" type="number" step="0.1" value={pfForm.reqGpa} onChange={e=>setPfForm({...pfForm,reqGpa:parseFloat(e.target.value)||3.0})}/>
+          </div>
+          <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:4}}>
+            <Btn onClick={()=>setModal(null)}>취소</Btn>
+            <Btn variant="accent" onClick={saveProfile}>저장</Btn>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={modal==='addCourse'||modal==='editCourse'} onClose={()=>{setModal(null);setEditId(null)}} title={modal==='editCourse'?'과목 수정':'과목 추가'}>
+        <CourseForm/>
+      </Modal>
+
+      <Modal open={modal==='milestones'} onClose={()=>setModal(null)} title="졸업요건 진행상태">
+        <div style={{display:'flex',flexDirection:'column',gap:14}}>
+          {Object.entries(msLabels).map(([k,l])=>(
+            <Select key={k} label={l} value={ms[k]} onChange={e=>update(d=>{d.milestones={...d.milestones,[k]:e.target.value}})}>
+              {msOptions.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}
+            </Select>
+          ))}
+          <Btn variant="accent" onClick={()=>setModal(null)} style={{alignSelf:'flex-end',marginTop:4}}>확인</Btn>
+        </div>
+      </Modal>
+
+      <Modal open={modal==='timetable'} onClose={()=>setModal(null)} title="시간표">
+        <Timetable/>
+      </Modal>
     </div>
   );
 }
