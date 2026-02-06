@@ -193,9 +193,10 @@ function App(){
   const resetData=()=>{if(confirm('모든 데이터를 초기화합니다.')){setData(defaultData);setModal(null);}};
 
   /* Chat */
-  const handleChat=()=>{
-    if(!ci.trim())return;
-    const q=ci.trim();setCi('');
+  const handleChat=(directText)=>{
+    const q=(directText||ci).trim();
+    if(!q)return;
+    setCi('');
     setMsgs(p=>[...p,{role:'user',text:q}]);
     setTimeout(()=>{
       const i=q.toLowerCase();let r='';
@@ -487,12 +488,12 @@ function App(){
       </div>
       <div style={{padding:10,borderTop:'1px solid var(--border)'}}>
         <div style={{display:'flex',gap:8}}>
-          <input value={ci} onChange={e=>setCi(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleChat()} placeholder="질문을 입력하세요" style={{flex:1,padding:'8px 12px',border:'1px solid var(--border)',borderRadius:7,fontSize:13,outline:'none',background:'var(--bg)'}}/>
+          <input value={ci} onChange={e=>setCi(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.nativeEvent.isComposing&&e.keyCode!==229)handleChat()}} placeholder="질문을 입력하세요" style={{flex:1,padding:'8px 12px',border:'1px solid var(--border)',borderRadius:7,fontSize:13,outline:'none',background:'var(--bg)'}}/>
           <button onClick={handleChat} style={{padding:'8px 12px',background:'var(--accent)',border:'none',borderRadius:7,color:'#fff',cursor:'pointer',display:'flex',alignItems:'center'}}>{I.send}</button>
         </div>
         <div style={{display:'flex',gap:6,marginTop:8,overflowX:'auto',paddingBottom:2}}>
           {['졸업요건','자격시험','학술발표','남은 학점'].map(q=>(
-            <button key={q} onClick={()=>setCi(q)} style={{whiteSpace:'nowrap',fontSize:11,padding:'4px 10px',background:'#f3f3f3',border:'1px solid var(--border)',borderRadius:5,cursor:'pointer',color:'var(--ts)'}}>{q}</button>
+            <button key={q} onClick={()=>handleChat(q)} style={{whiteSpace:'nowrap',fontSize:11,padding:'4px 10px',background:'#f3f3f3',border:'1px solid var(--border)',borderRadius:5,cursor:'pointer',color:'var(--ts)'}}>{q}</button>
           ))}
         </div>
       </div>
