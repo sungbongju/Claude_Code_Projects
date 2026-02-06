@@ -1,723 +1,564 @@
-import { useState } from 'react';
-import { CheckCircle, AlertCircle, BookOpen, Calendar, MessageCircle, Plus, X, ChevronRight, GraduationCap, Sparkles, User, Bell, FileText, Lightbulb, Clock, Award, TrendingUp, Coffee, Zap, Target, Brain, Heart, Activity, BarChart2, ChevronDown, ExternalLink, Info, MapPin } from 'lucide-react';
-
-// ============================================
-// 차의과학대학교 일반대학원 AI헬스케어융합학과
-// 2025학번 후기 석사과정 졸업요건 체커
-// 실제 학칙 기반 + 개인 데이터 반영
-// ============================================
-
-// 실제 졸업요건 (차의과학대학교 일반대학원 학칙 기준)
-const graduationRequirements = {
-  coursework: { name: '이수학점', required: 24, unit: '학점', color: '#6366F1', icon: BookOpen },
-  semesters: { name: '정규학기등록', required: 4, unit: '학기', color: '#10B981', icon: Calendar },
-  gpa: { name: '평점평균', required: 3.0, unit: '/4.5', color: '#F59E0B', icon: Award },
-  thesis: { name: '학위논문', required: 1, unit: '편', color: '#EC4899', icon: FileText },
-  qualExam: { name: '자격시험', required: 1, unit: '합격', color: '#8B5CF6', icon: Target },
-  publication: { name: 'SCIE급 논문게재', required: 1, unit: '편', color: '#14B8A6', icon: TrendingUp },
-};
-
-// AI헬스케어융합학과 교과목 카테고리
-const courseCategories = {
-  required: { name: '전공필수', color: '#6366F1', bgColor: '#EEF2FF' },
-  elective: { name: '전공선택', color: '#10B981', bgColor: '#ECFDF5' },
-  common: { name: '공통필수', color: '#F59E0B', bgColor: '#FFFBEB' },
-  research: { name: '연구/인턴십', color: '#EC4899', bgColor: '#FDF2F8' },
-};
-
-// 실제 이수 과목 데이터 (2025학년도 2학기 - 후기입학 1학기)
-const sampleCourses = [
-  { 
-    id: 1, 
-    code: 'AIH701', 
-    name: 'AI융합연구방법론', 
-    credits: 3, 
-    category: 'common', 
-    semester: '2025-2', 
-    grade: 'A+',
-    professor: '박대근',
-    location: '미래관316',
-    day: '목',
-    time: '09:00'
-  },
-  { 
-    id: 2, 
-    code: 'AIH702', 
-    name: 'AI응용사례연구Ⅰ', 
-    credits: 3, 
-    category: 'elective', 
-    semester: '2025-2', 
-    grade: 'A0',
-    professor: '정경인',
-    location: '',
-    day: '금',
-    time: '10:00'
-  },
-  { 
-    id: 3, 
-    code: 'AIH703', 
-    name: '펨테크디지털헬스케어 인턴십', 
-    credits: 3, 
-    category: 'research', 
-    semester: '2025-2', 
-    grade: 'A+',
-    professor: '한현욱',
-    location: '',
-    day: '월',
-    time: '12:00'
-  },
-  { 
-    id: 4, 
-    code: 'AIH704', 
-    name: '의료인공지능', 
-    credits: 3, 
-    category: 'required', 
-    semester: '2025-2', 
-    grade: 'A0',
-    professor: '조백환',
-    location: '차바이오컴플렉스B205',
-    day: '수',
-    time: '13:00'
-  },
-];
-
-// 학사일정 (2026학년도 1학기 차의과학대학교 일반대학원)
-const academicSchedule = [
-  { date: '2026-02-04', event: '2026학년도 1학기 수강신청', type: 'critical', daysLeft: -2 },
-  { date: '2026-02-11', event: '동계 학위수여식', type: 'normal', daysLeft: 5 },
-  { date: '2026-02-23', event: '1학기 등록금 납부 시작', type: 'important', daysLeft: 17 },
-  { date: '2026-02-27', event: '1학기 등록금 납부 마감', type: 'critical', daysLeft: 21 },
-  { date: '2026-03-03', event: '1학기 개강', type: 'important', daysLeft: 25 },
-  { date: '2026-03-10', event: '수강신청 변경기간', type: 'normal', daysLeft: 32 },
-  { date: '2026-04-14', event: '학위논문제출 자격시험 신청', type: 'important', daysLeft: 67 },
-  { date: '2026-06-16', event: '1학기 기말고사', type: 'normal', daysLeft: 130 },
-  { date: '2026-07-11', event: '학위논문제출 마감', type: 'critical', daysLeft: 155 },
-];
-
-// AI 추천 과목 (12학점 이수 기반)
-const recommendedCourses = [
-  { code: 'AIH801', name: 'AI응용사례연구Ⅱ', credits: 3, category: 'elective', reason: 'AI응용사례연구Ⅰ의 연속 과목입니다. 심화 학습에 도움됩니다.', priority: 'high' },
-  { code: 'AIH802', name: '헬스케어데이터분석', credits: 3, category: 'required', reason: '전공필수 과목으로, 졸업요건 충족을 위해 수강을 권장드립니다.', priority: 'high' },
-  { code: 'AIH803', name: '디지털치료제개론', credits: 3, category: 'elective', reason: '펨테크 인턴십과 연계되는 디지털헬스케어 심화 과목입니다.', priority: 'medium' },
-  { code: 'AIH901', name: '논문연구Ⅰ', credits: 3, category: 'research', reason: '3학기부터 논문 준비를 시작하시면 적절합니다.', priority: 'medium' },
-];
-
-export default function ChaGradMate() {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [courses] = useState(sampleCourses);
-  const [showChatbot, setShowChatbot] = useState(false);
-  const [chatMessages, setChatMessages] = useState([
-    { role: 'assistant', content: '안녕하세요! 차의과학대학교 AI헬스케어융합학과 졸업요건 AI 어드바이저입니다. 🎓\n\n학칙, 수강편람, 졸업요건에 대해 궁금한 점이 있으시면 무엇이든 물어보세요!' }
-  ]);
-  const [chatInput, setChatInput] = useState('');
-  const [expandedSchedule, setExpandedSchedule] = useState(false);
-
-  // 개인 정보
-  const studentInfo = {
-    name: '성봉주',
-    studentId: '20259461',
-    department: 'AI헬스케어융합학과',
-    admissionYear: '2025학년도 후기',
-    currentSemester: 1,
-    degree: '석사과정'
-  };
-
-  // 학점 계산
-  const totalCredits = 12; // 실제 이수 학점
-  const completedSemesters = 1; // 2025-2학기 완료
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GradMate - 차의과학대학교 AI헬스케어융합학과</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    * { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+  </style>
+</head>
+<body>
+  <div id="root"></div>
   
-  // GPA (익명화)
-  const currentGPA = '3.87'; // 익명화된 값
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
 
-  // 진행 상황
-  const progress = {
-    coursework: { current: totalCredits, required: 24 },
-    semesters: { current: completedSemesters, required: 4 },
-    gpa: { current: parseFloat(currentGPA), required: 3.0 },
-    thesis: { current: 0, required: 1 },
-    qualExam: { current: 0, required: 1 },
-    publication: { current: 0, required: 1 },
-  };
+    // Lucide 아이콘 컴포넌트
+    const Icon = ({ name, className = "w-5 h-5" }) => {
+      const ref = useRef(null);
+      useEffect(() => {
+        if (ref.current) {
+          ref.current.innerHTML = '';
+          const icon = lucide.createElement(lucide.icons[name]);
+          icon.setAttribute('class', className);
+          ref.current.appendChild(icon);
+        }
+      }, [name, className]);
+      return <span ref={ref} className="inline-flex items-center justify-center" />;
+    };
 
-  // 전체 진행률 계산
-  const overallProgress = Math.round(
-    ((Math.min(progress.coursework.current / progress.coursework.required, 1) * 30) +
-    (Math.min(progress.semesters.current / progress.semesters.required, 1) * 20) +
-    (progress.gpa.current >= progress.gpa.required ? 15 : (progress.gpa.current / progress.gpa.required) * 15) +
-    (progress.thesis.current * 15) +
-    (progress.qualExam.current * 10) +
-    (progress.publication.current * 10))
-  );
+    // 실제 졸업요건 (차의과학대학교 일반대학원 학칙 기준)
+    const graduationRequirements = {
+      coursework: { name: '이수학점', required: 24, unit: '학점', color: '#6366F1' },
+      semesters: { name: '정규학기등록', required: 4, unit: '학기', color: '#10B981' },
+      gpa: { name: '평점평균', required: 3.0, unit: '/4.5', color: '#F59E0B' },
+      thesis: { name: '학위논문', required: 1, unit: '편', color: '#EC4899' },
+      qualExam: { name: '자격시험', required: 1, unit: '합격', color: '#8B5CF6' },
+      publication: { name: 'SCIE급 논문게재', required: 1, unit: '편', color: '#14B8A6' },
+    };
 
-  // 챗봇 응답
-  const handleChatSubmit = () => {
-    if (!chatInput.trim()) return;
-    setChatMessages([...chatMessages, { role: 'user', content: chatInput }]);
-    
-    setTimeout(() => {
-      let response = '';
-      const input = chatInput.toLowerCase();
+    // 교과목 카테고리
+    const courseCategories = {
+      required: { name: '전공필수', color: '#6366F1', bgColor: '#EEF2FF' },
+      elective: { name: '전공선택', color: '#10B981', bgColor: '#ECFDF5' },
+      common: { name: '공통필수', color: '#F59E0B', bgColor: '#FFFBEB' },
+      research: { name: '연구/인턴십', color: '#EC4899', bgColor: '#FDF2F8' },
+    };
+
+    // 실제 이수 과목 데이터 (2025학년도 2학기)
+    const sampleCourses = [
+      { id: 1, code: 'AIH701', name: 'AI융합연구방법론', credits: 3, category: 'common', semester: '2025-2', grade: 'A+', professor: '박대근', location: '미래관316', day: '목', time: '09:00' },
+      { id: 2, code: 'AIH702', name: 'AI응용사례연구Ⅰ', credits: 3, category: 'elective', semester: '2025-2', grade: 'A0', professor: '정경인', location: '', day: '금', time: '10:00' },
+      { id: 3, code: 'AIH703', name: '펨테크디지털헬스케어 인턴십', credits: 3, category: 'research', semester: '2025-2', grade: 'A+', professor: '한현욱', location: '', day: '월', time: '12:00' },
+      { id: 4, code: 'AIH704', name: '의료인공지능', credits: 3, category: 'required', semester: '2025-2', grade: 'A0', professor: '조백환', location: '차바이오컴플렉스B205', day: '수', time: '13:00' },
+    ];
+
+    // 학사일정
+    const academicSchedule = [
+      { date: '2026-02-04', event: '2026학년도 1학기 수강신청', type: 'critical', daysLeft: -2 },
+      { date: '2026-02-11', event: '동계 학위수여식', type: 'normal', daysLeft: 5 },
+      { date: '2026-02-23', event: '1학기 등록금 납부 시작', type: 'important', daysLeft: 17 },
+      { date: '2026-02-27', event: '1학기 등록금 납부 마감', type: 'critical', daysLeft: 21 },
+      { date: '2026-03-03', event: '1학기 개강', type: 'important', daysLeft: 25 },
+      { date: '2026-04-14', event: '학위논문제출 자격시험 신청', type: 'important', daysLeft: 67 },
+      { date: '2026-07-11', event: '학위논문제출 마감', type: 'critical', daysLeft: 155 },
+    ];
+
+    // AI 추천 과목
+    const recommendedCourses = [
+      { code: 'AIH801', name: 'AI응용사례연구Ⅱ', credits: 3, category: 'elective', reason: 'AI응용사례연구Ⅰ의 연속 과목입니다.', priority: 'high' },
+      { code: 'AIH802', name: '헬스케어데이터분석', credits: 3, category: 'required', reason: '전공필수 과목으로, 졸업요건 충족을 위해 권장드립니다.', priority: 'high' },
+      { code: 'AIH803', name: '디지털치료제개론', credits: 3, category: 'elective', reason: '펨테크 인턴십과 연계되는 심화 과목입니다.', priority: 'medium' },
+      { code: 'AIH901', name: '논문연구Ⅰ', credits: 3, category: 'research', reason: '3학기부터 논문 준비를 시작하시면 적절합니다.', priority: 'medium' },
+    ];
+
+    // Progress Ring Component
+    const ProgressRing = ({ progress, size = 120, strokeWidth = 10, color = '#6366F1' }) => {
+      const radius = (size - strokeWidth) / 2;
+      const circumference = radius * 2 * Math.PI;
+      const offset = circumference - (progress / 100) * circumference;
       
-      if (input.includes('졸업') && (input.includes('요건') || input.includes('조건'))) {
-        response = '📋 **차의과학대학교 일반대학원 석사과정 졸업요건**\n\n' +
-          '1️⃣ **수료조건**\n• 정규학기등록: 4학기 이상\n• 이수학점: 24학점 이상\n• 평점평균: 3.0(B0) 이상\n\n' +
-          '2️⃣ **학위수여 요건**\n• 학위논문제출 자격시험 합격\n• 학위논문심사 합격 (재적연한 내)\n• SCIE급 학술지 논문 게재\n• 박사과정 진학 시 최소 1개 학기 연구등록 필수';
-      } else if (input.includes('자격시험') || input.includes('자격 시험')) {
-        response = '📝 **학위논문제출 자격시험 안내**\n\n' +
-          '• 신청시기: 매 학기 초 (4월/9월 중)\n• 2026년 1학기: 4월 14일~16일 신청\n• 시험일: 4월 25일 예정\n\n' +
-          '자격시험에 합격해야 학위논문을 제출할 수 있습니다. 수료 예정 학기에 미리 신청하시는 것을 권장드립니다.';
-      } else if (input.includes('논문') && (input.includes('게재') || input.includes('scie'))) {
-        response = '📰 **SCIE급 논문 게재 요건**\n\n' +
-          'AI헬스케어융합학과 졸업을 위해서는 학위논문을 SCIE급 학술지에 게재해야 합니다.\n\n' +
-          '• 게재 시점: 논문심사 전까지 게재 확정 필요\n• 저자 조건: 학과별로 상이 (지도교수님께 확인 필요)\n\n' +
-          '💡 팁: 헬스커뮤니케이션연구원에서 논문 작성 지원을 받을 수 있습니다.';
-      } else if (input.includes('수강신청') || input.includes('수강 신청')) {
-        response = '📅 **2026학년도 1학기 수강신청 안내**\n\n' +
-          '• 수강신청: 2026.02.04(수)~02.06(금)\n• 등록금 납부: 02.23(월)~02.27(금)\n• 개강: 03.03(월)\n• 수강신청 변경: 03.10(월)~03.12(수)\n\n' +
-          '⚠️ 현재 1학기 수강신청 기간입니다! 빠른 신청을 권장드립니다.';
-      } else if (input.includes('학점') && (input.includes('부족') || input.includes('더') || input.includes('남은'))) {
-        const remaining = 24 - totalCredits;
-        response = `📊 **현재 이수 현황 (${studentInfo.name}님)**\n\n` +
-          `• 이수 학점: ${totalCredits}학점 / 24학점\n` +
-          `• 부족 학점: ${remaining}학점\n` +
-          `• 등록 학기: ${completedSemesters}학기 / 4학기\n\n` +
-          `남은 3학기 동안 매 학기 4~5과목(12학점)씩 수강하시면 충분합니다. 현재 페이스대로 진행하시면 됩니다! 👍`;
-      } else if (input.includes('재적연한') || input.includes('수료')) {
-        response = '⏰ **재적연한 안내**\n\n' +
-          '• 석사 학위과정: 12학기\n• 박사 학위과정: 20학기\n• 석·박사 통합과정: 22학기\n\n' +
-          '학위논문의 합격시한은 재적연한으로 합니다. 재적연한 내에 학위를 취득하지 못하면 제적 처리됩니다.';
-      } else if (input.includes('지도교수') || input.includes('교수')) {
-        response = '👨‍🏫 **현재 수강 중인 교수님**\n\n' +
-          '• 박대근 교수 - AI융합연구방법론\n' +
-          '• 정경인 교수 - AI응용사례연구Ⅰ\n' +
-          '• 한현욱 교수 - 펨테크디지털헬스케어 인턴십\n' +
-          '• 조백환 교수 - 의료인공지능\n\n' +
-          '지도교수 배정은 입학 후 1학기 이내에 신청해야 합니다. 9월 중 지도교수 배정 신청 기간을 확인하세요.';
-      } else {
-        response = '해당 질문에 대해 더 자세한 정보가 필요합니다. 다음과 같은 질문을 해보세요:\n\n' +
-          '• "졸업요건 알려줘"\n• "자격시험 언제야?"\n• "SCIE 논문 게재 조건"\n• "수강신청 일정"\n• "학점 얼마나 더 들어야 해?"\n• "지도교수 배정"';
-      }
-      
-      setChatMessages(prev => [...prev, { role: 'assistant', content: response }]);
-    }, 600);
-    
-    setChatInput('');
-  };
+      return (
+        <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+          <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="#E5E7EB" strokeWidth={strokeWidth} />
+          <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke={color} strokeWidth={strokeWidth}
+            strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round"
+            style={{ transition: 'all 1s ease-out' }} />
+        </svg>
+      );
+    };
 
-  // Progress Ring Component
-  const ProgressRing = ({ progress, size = 120, strokeWidth = 10, color = '#6366F1' }) => {
-    const radius = (size - strokeWidth) / 2;
-    const circumference = radius * 2 * Math.PI;
-    const offset = circumference - (progress / 100) * circumference;
-    
-    return (
-      <svg width={size} height={size} className="transform -rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="#E5E7EB"
-          strokeWidth={strokeWidth}
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          className="transition-all duration-1000 ease-out"
-        />
-      </svg>
-    );
-  };
+    function ChaGradMate() {
+      const [activeTab, setActiveTab] = useState('dashboard');
+      const [courses] = useState(sampleCourses);
+      const [showChatbot, setShowChatbot] = useState(false);
+      const [chatMessages, setChatMessages] = useState([
+        { role: 'assistant', content: '안녕하세요! 차의과학대학교 AI헬스케어융합학과 졸업요건 AI 어드바이저입니다. 🎓\n\n학칙, 수강편람, 졸업요건에 대해 궁금한 점이 있으시면 무엇이든 물어보세요!' }
+      ]);
+      const [chatInput, setChatInput] = useState('');
+      const [expandedSchedule, setExpandedSchedule] = useState(false);
 
-  // Dashboard Tab
-  const DashboardTab = () => (
-    <div className="space-y-6">
-      {/* Header Card */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-6 text-white shadow-2xl">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-32 translate-x-32" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-2xl translate-y-24 -translate-x-24" />
+      const studentInfo = {
+        name: '성봉주',
+        studentId: '20259461',
+        department: 'AI헬스케어융합학과',
+        admissionYear: '2025학년도 후기',
+        currentSemester: 1,
+        degree: '석사과정'
+      };
+
+      const totalCredits = 12;
+      const completedSemesters = 1;
+      const currentGPA = '3.87';
+
+      const progress = {
+        coursework: { current: totalCredits, required: 24 },
+        semesters: { current: completedSemesters, required: 4 },
+        gpa: { current: parseFloat(currentGPA), required: 3.0 },
+        thesis: { current: 0, required: 1 },
+        qualExam: { current: 0, required: 1 },
+        publication: { current: 0, required: 1 },
+      };
+
+      const overallProgress = Math.round(
+        ((Math.min(progress.coursework.current / progress.coursework.required, 1) * 30) +
+        (Math.min(progress.semesters.current / progress.semesters.required, 1) * 20) +
+        (progress.gpa.current >= progress.gpa.required ? 15 : (progress.gpa.current / progress.gpa.required) * 15) +
+        (progress.thesis.current * 15) +
+        (progress.qualExam.current * 10) +
+        (progress.publication.current * 10))
+      );
+
+      const handleChatSubmit = () => {
+        if (!chatInput.trim()) return;
+        setChatMessages([...chatMessages, { role: 'user', content: chatInput }]);
         
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 text-white/80 text-sm mb-1">
-            <GraduationCap className="w-4 h-4" />
-            <span>차의과학대학교 일반대학원</span>
-          </div>
-          <h2 className="text-xl font-bold mb-1">{studentInfo.department} {studentInfo.degree}</h2>
-          <p className="text-white/70 text-sm">{studentInfo.admissionYear} • {completedSemesters}학기 수료</p>
+        setTimeout(() => {
+          let response = '';
+          const input = chatInput.toLowerCase();
           
-          <div className="flex items-center justify-between mt-6">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <ProgressRing progress={overallProgress} size={100} strokeWidth={8} color="#fff" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-2xl font-bold">{overallProgress}%</span>
+          if (input.includes('졸업') && (input.includes('요건') || input.includes('조건'))) {
+            response = '📋 차의과학대학교 일반대학원 석사과정 졸업요건\n\n' +
+              '1️⃣ 수료조건\n• 정규학기등록: 4학기 이상\n• 이수학점: 24학점 이상\n• 평점평균: 3.0(B0) 이상\n\n' +
+              '2️⃣ 학위수여 요건\n• 학위논문제출 자격시험 합격\n• 학위논문심사 합격 (재적연한 내)\n• SCIE급 학술지 논문 게재';
+          } else if (input.includes('자격시험') || input.includes('자격 시험')) {
+            response = '📝 학위논문제출 자격시험 안내\n\n• 신청시기: 매 학기 초\n• 2026년 1학기: 4월 14일~16일 신청\n• 시험일: 4월 25일 예정\n\n자격시험에 합격해야 학위논문을 제출할 수 있습니다.';
+          } else if (input.includes('논문') && (input.includes('게재') || input.includes('scie'))) {
+            response = '📰 SCIE급 논문 게재 요건\n\n졸업을 위해 학위논문을 SCIE급 학술지에 게재해야 합니다.\n\n• 게재 시점: 논문심사 전까지 게재 확정 필요\n• 저자 조건: 학과별로 상이 (지도교수님께 확인 필요)';
+          } else if (input.includes('수강신청') || input.includes('수강 신청')) {
+            response = '📅 2026학년도 1학기 수강신청 안내\n\n• 수강신청: 2026.02.04~02.06\n• 등록금 납부: 02.23~02.27\n• 개강: 03.03\n• 수강신청 변경: 03.10~03.12';
+          } else if (input.includes('학점') && (input.includes('부족') || input.includes('더') || input.includes('남은'))) {
+            response = '📊 현재 이수 현황\n\n• 이수 학점: 12학점 / 24학점\n• 부족 학점: 12학점\n• 등록 학기: 1학기 / 4학기\n\n남은 3학기 동안 매 학기 4학점씩 수강하시면 충분합니다!';
+          } else {
+            response = '해당 질문에 대해 더 자세한 정보가 필요합니다. 다음과 같은 질문을 해보세요:\n\n• "졸업요건 알려줘"\n• "자격시험 언제야?"\n• "SCIE 논문 게재 조건"\n• "수강신청 일정"\n• "학점 얼마나 더 들어야 해?"';
+          }
+          
+          setChatMessages(prev => [...prev, { role: 'assistant', content: response }]);
+        }, 600);
+        
+        setChatInput('');
+      };
+
+      // Dashboard Tab
+      const DashboardTab = () => (
+        <div className="space-y-6">
+          {/* Header Card */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-6 text-white shadow-2xl">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-32 translate-x-32" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-2xl translate-y-24 -translate-x-24" />
+            
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 text-white/80 text-sm mb-1">
+                <Icon name="graduation-cap" className="w-4 h-4" />
+                <span>차의과학대학교 일반대학원</span>
+              </div>
+              <h2 className="text-xl font-bold mb-1">{studentInfo.department} {studentInfo.degree}</h2>
+              <p className="text-white/70 text-sm">{studentInfo.admissionYear} • {completedSemesters}학기 수료</p>
+              
+              <div className="flex items-center justify-between mt-6">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <ProgressRing progress={overallProgress} size={100} strokeWidth={8} color="#fff" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-2xl font-bold">{overallProgress}%</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-white/80 text-sm">졸업 진행률</p>
+                    <p className="text-lg font-semibold">수료까지 3학기</p>
+                  </div>
+                </div>
+                
+                <div className="text-right">
+                  <div className="flex items-center gap-1 text-emerald-300">
+                    <Icon name="trending-up" className="w-4 h-4" />
+                    <span className="text-sm">순조로운 출발</span>
+                  </div>
+                  <p className="text-white/70 text-xs mt-1">예정대로라면 2027.08 졸업</p>
                 </div>
               </div>
-              <div>
-                <p className="text-white/80 text-sm">졸업 진행률</p>
-                <p className="text-lg font-semibold">수료까지 3학기</p>
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <Icon name="book-open" className="w-5 h-5 text-indigo-500" />
+                <span className="text-xs text-gray-400">이수학점</span>
+              </div>
+              <p className="text-2xl font-bold text-gray-900">{totalCredits}<span className="text-sm text-gray-400">/24</span></p>
+              <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${(totalCredits/24)*100}%` }} />
               </div>
             </div>
             
-            <div className="text-right">
-              <div className="flex items-center gap-1 text-emerald-300">
-                <TrendingUp className="w-4 h-4" />
-                <span className="text-sm">순조로운 출발</span>
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <Icon name="award" className="w-5 h-5 text-amber-500" />
+                <span className="text-xs text-gray-400">평점평균</span>
               </div>
-              <p className="text-white/70 text-xs mt-1">예정대로라면 2027.08 졸업</p>
+              <p className="text-2xl font-bold text-gray-900">{currentGPA}<span className="text-sm text-gray-400">/4.5</span></p>
+              <div className="mt-2 flex items-center gap-1">
+                <Icon name="check-circle" className="w-3.5 h-3.5 text-emerald-500" />
+                <span className="text-xs text-emerald-600">기준 충족</span>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-2">
-            <BookOpen className="w-5 h-5 text-indigo-500" />
-            <span className="text-xs text-gray-400">이수학점</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900">{totalCredits}<span className="text-sm text-gray-400">/24</span></p>
-          <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${(totalCredits/24)*100}%` }} />
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-2">
-            <Award className="w-5 h-5 text-amber-500" />
-            <span className="text-xs text-gray-400">평점평균</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900">{currentGPA}<span className="text-sm text-gray-400">/4.5</span></p>
-          <div className="mt-2 flex items-center gap-1">
-            <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-            <span className="text-xs text-emerald-600">기준 충족</span>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-2">
-            <Calendar className="w-5 h-5 text-emerald-500" />
-            <span className="text-xs text-gray-400">등록학기</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900">{completedSemesters}<span className="text-sm text-gray-400">/4</span></p>
-          <p className="mt-2 text-xs text-gray-500">3학기 남음</p>
-        </div>
-      </div>
-
-      {/* Requirements Checklist */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-gray-900">졸업요건 체크리스트</h3>
-          <span className="text-xs text-gray-400">차의과학대학교 일반대학원 학칙</span>
-        </div>
-        
-        <div className="space-y-3">
-          {Object.entries(graduationRequirements).map(([key, req]) => {
-            const prog = progress[key];
-            const isComplete = key === 'gpa' 
-              ? prog.current >= prog.required 
-              : prog.current >= prog.required;
-            const percentage = key === 'gpa'
-              ? Math.min((prog.current / prog.required) * 100, 100)
-              : Math.min((prog.current / prog.required) * 100, 100);
             
-            return (
-              <div key={key} className="flex items-center gap-4 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isComplete ? 'bg-emerald-100' : 'bg-gray-200'}`}>
-                  {isComplete ? (
-                    <CheckCircle className="w-5 h-5 text-emerald-600" />
-                  ) : (
-                    <req.icon className="w-5 h-5 text-gray-500" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className={`font-medium ${isComplete ? 'text-emerald-700' : 'text-gray-700'}`}>{req.name}</span>
-                    <span className={`text-sm ${isComplete ? 'text-emerald-600' : 'text-gray-500'}`}>
-                      {key === 'gpa' ? prog.current : prog.current}{req.unit} / {prog.required}{req.unit}
-                    </span>
-                  </div>
-                  <div className="mt-1.5 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full rounded-full transition-all duration-500" 
-                      style={{ width: `${percentage}%`, backgroundColor: isComplete ? '#10B981' : req.color }}
-                    />
-                  </div>
-                </div>
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <Icon name="calendar" className="w-5 h-5 text-emerald-500" />
+                <span className="text-xs text-gray-400">등록학기</span>
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Upcoming Schedule */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-gray-900">다가오는 일정</h3>
-          <button 
-            onClick={() => setExpandedSchedule(!expandedSchedule)}
-            className="text-indigo-600 text-sm font-medium flex items-center gap-1"
-          >
-            {expandedSchedule ? '접기' : '더보기'}
-            <ChevronDown className={`w-4 h-4 transition-transform ${expandedSchedule ? 'rotate-180' : ''}`} />
-          </button>
-        </div>
-        
-        <div className="space-y-2">
-          {academicSchedule
-            .filter(item => item.daysLeft >= -7)
-            .slice(0, expandedSchedule ? undefined : 4)
-            .map((item, idx) => (
-              <div 
-                key={idx} 
-                className={`flex items-center gap-3 p-3 rounded-xl ${
-                  item.type === 'critical' ? 'bg-red-50 border border-red-100' :
-                  item.type === 'important' ? 'bg-amber-50 border border-amber-100' :
-                  'bg-gray-50'
-                }`}
-              >
-                <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center ${
-                  item.type === 'critical' ? 'bg-red-500' :
-                  item.type === 'important' ? 'bg-amber-500' :
-                  'bg-gray-300'
-                }`}>
-                  <span className="text-white text-xs">{item.daysLeft < 0 ? '진행중' : 'D-'}</span>
-                  <span className="text-white font-bold">{item.daysLeft < 0 ? '' : item.daysLeft}</span>
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">{item.event}</p>
-                  <p className="text-sm text-gray-500">{item.date}</p>
-                </div>
-              </div>
-            ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  // Courses Tab
-  const CoursesTab = () => {
-    const gradePoints = { 'A+': 4.5, 'A0': 4.0, 'B+': 3.5, 'B0': 3.0, 'C+': 2.5, 'C0': 2.0, 'D+': 1.5, 'D0': 1.0, 'F': 0 };
-    
-    return (
-      <div className="space-y-6">
-        {/* Summary */}
-        <div className="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl p-5 text-white">
-          <h3 className="font-bold text-lg mb-3">이수 현황 요약</h3>
-          <div className="grid grid-cols-4 gap-3">
-            {Object.entries(courseCategories).map(([key, cat]) => {
-              const catCredits = courses.filter(c => c.category === key).reduce((s, c) => s + c.credits, 0);
-              return (
-                <div key={key} className="text-center">
-                  <div className="text-2xl font-bold">{catCredits}</div>
-                  <div className="text-xs text-white/70">{cat.name}</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Course List - 2025-2학기 */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 px-5 py-4 flex items-center justify-between border-b border-gray-100">
-            <div>
-              <h4 className="font-bold text-gray-900">2025학년도 2학기</h4>
-              <p className="text-sm text-gray-500">{totalCredits}학점 • 평점 {currentGPA}</p>
+              <p className="text-2xl font-bold text-gray-900">{completedSemesters}<span className="text-sm text-gray-400">/4</span></p>
+              <p className="mt-2 text-xs text-gray-500">3학기 남음</p>
             </div>
-            <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-full">
-              후기입학 1학기
-            </span>
           </div>
-          <div className="divide-y divide-gray-50">
-            {courses.map(course => (
-              <div key={course.id} className="px-5 py-4">
-                <div className="flex items-start gap-4">
-                  <div 
-                    className="w-1.5 h-full min-h-[60px] rounded-full"
-                    style={{ backgroundColor: courseCategories[course.category]?.color }}
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs text-gray-400">{course.code}</span>
-                      <span 
-                        className="text-xs px-1.5 py-0.5 rounded"
-                        style={{ 
-                          backgroundColor: courseCategories[course.category]?.bgColor,
-                          color: courseCategories[course.category]?.color
-                        }}
-                      >
-                        {courseCategories[course.category]?.name}
-                      </span>
+
+          {/* Requirements Checklist */}
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-900">졸업요건 체크리스트</h3>
+              <span className="text-xs text-gray-400">차의과학대학교 일반대학원 학칙</span>
+            </div>
+            
+            <div className="space-y-3">
+              {Object.entries(graduationRequirements).map(([key, req]) => {
+                const prog = progress[key];
+                const isComplete = key === 'gpa' ? prog.current >= prog.required : prog.current >= prog.required;
+                const percentage = Math.min((key === 'gpa' ? prog.current / prog.required : prog.current / prog.required) * 100, 100);
+                
+                return (
+                  <div key={key} className="flex items-center gap-4 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isComplete ? 'bg-emerald-100' : 'bg-gray-200'}`}>
+                      {isComplete ? (
+                        <Icon name="check-circle" className="w-5 h-5 text-emerald-600" />
+                      ) : (
+                        <Icon name="circle" className="w-5 h-5 text-gray-400" />
+                      )}
                     </div>
-                    <p className="font-semibold text-gray-900">{course.name}</p>
-                    <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
-                      <span>{course.credits}학점</span>
-                      <span>•</span>
-                      <span>{course.professor} 교수</span>
-                    </div>
-                    {course.location && (
-                      <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
-                        <MapPin className="w-3 h-3" />
-                        <span>{course.location}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className={`font-medium ${isComplete ? 'text-emerald-700' : 'text-gray-700'}`}>{req.name}</span>
+                        <span className={`text-sm ${isComplete ? 'text-emerald-600' : 'text-gray-500'}`}>
+                          {key === 'gpa' ? prog.current : prog.current}{req.unit} / {prog.required}{req.unit}
+                        </span>
                       </div>
-                    )}
+                      <div className="mt-1.5 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all duration-500" 
+                          style={{ width: `${percentage}%`, backgroundColor: isComplete ? '#10B981' : req.color }} />
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className={`text-lg font-bold ${
-                      course.grade.startsWith('A') ? 'text-emerald-600' :
-                      course.grade.startsWith('B') ? 'text-blue-600' :
-                      'text-gray-600'
-                    }`}>{course.grade}</span>
-                    <p className="text-xs text-gray-400 mt-1">{course.day} {course.time}</p>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Upcoming Schedule */}
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-900">다가오는 일정</h3>
+              <button onClick={() => setExpandedSchedule(!expandedSchedule)} className="text-indigo-600 text-sm font-medium flex items-center gap-1">
+                {expandedSchedule ? '접기' : '더보기'}
+                <Icon name="chevron-down" className={`w-4 h-4 transition-transform ${expandedSchedule ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+            
+            <div className="space-y-2">
+              {academicSchedule.filter(item => item.daysLeft >= -7).slice(0, expandedSchedule ? undefined : 4).map((item, idx) => (
+                <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl ${
+                  item.type === 'critical' ? 'bg-red-50 border border-red-100' :
+                  item.type === 'important' ? 'bg-amber-50 border border-amber-100' : 'bg-gray-50'
+                }`}>
+                  <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center ${
+                    item.type === 'critical' ? 'bg-red-500' : item.type === 'important' ? 'bg-amber-500' : 'bg-gray-300'
+                  }`}>
+                    <span className="text-white text-xs">{item.daysLeft < 0 ? '진행중' : 'D-'}</span>
+                    <span className="text-white font-bold">{item.daysLeft < 0 ? '' : item.daysLeft}</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">{item.event}</p>
+                    <p className="text-sm text-gray-500">{item.date}</p>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Info Box */}
-        <div className="bg-indigo-50 rounded-2xl p-5 border border-indigo-100">
-          <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-indigo-600 mt-0.5" />
-            <div>
-              <h4 className="font-medium text-indigo-900">남은 이수 계획</h4>
-              <p className="text-sm text-indigo-700 mt-1">
-                졸업까지 <strong>12학점</strong>이 더 필요합니다. 
-                2026-1학기부터 매 학기 4학점(또는 6학점)씩 수강하시면 4학기 내 수료 가능합니다.
-              </p>
+              ))}
             </div>
           </div>
         </div>
-      </div>
-    );
-  };
+      );
 
-  // Recommend Tab
-  const RecommendTab = () => (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-            <Brain className="w-5 h-5" />
+      // Courses Tab
+      const CoursesTab = () => (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl p-5 text-white">
+            <h3 className="font-bold text-lg mb-3">이수 현황 요약</h3>
+            <div className="grid grid-cols-4 gap-3">
+              {Object.entries(courseCategories).map(([key, cat]) => {
+                const catCredits = courses.filter(c => c.category === key).reduce((s, c) => s + c.credits, 0);
+                return (
+                  <div key={key} className="text-center">
+                    <div className="text-2xl font-bold">{catCredits}</div>
+                    <div className="text-xs text-white/70">{cat.name}</div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <div>
-            <h3 className="font-bold text-lg">AI 수강 추천</h3>
-            <p className="text-sm text-white/70">현재 12학점 이수 기준 분석</p>
-          </div>
-        </div>
-        <div className="mt-4 p-3 bg-white/10 rounded-xl">
-          <p className="text-sm">
-            💡 2026-1학기에 <strong>9~12학점</strong> 수강을 권장드립니다. 
-            논문연구 준비도 함께 시작하시면 좋습니다.
-          </p>
-        </div>
-      </div>
 
-      <div className="space-y-3">
-        {recommendedCourses.map((course, idx) => (
-          <div key={idx} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-            <div className="flex items-start gap-4">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                course.priority === 'high' ? 'bg-red-100' : 'bg-amber-100'
-              }`}>
-                {course.priority === 'high' ? (
-                  <Zap className="w-5 h-5 text-red-600" />
-                ) : (
-                  <Lightbulb className="w-5 h-5 text-amber-600" />
-                )}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 px-5 py-4 flex items-center justify-between border-b border-gray-100">
+              <div>
+                <h4 className="font-bold text-gray-900">2025학년도 2학기</h4>
+                <p className="text-sm text-gray-500">{totalCredits}학점 • 평점 {currentGPA}</p>
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs text-gray-400">{course.code}</span>
-                  <span 
-                    className="text-xs px-1.5 py-0.5 rounded"
-                    style={{ 
-                      backgroundColor: courseCategories[course.category]?.bgColor,
-                      color: courseCategories[course.category]?.color
-                    }}
-                  >
-                    {courseCategories[course.category]?.name}
-                  </span>
-                  {course.priority === 'high' && (
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-600">필수 권장</span>
-                  )}
+              <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-full">후기입학 1학기</span>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {courses.map(course => (
+                <div key={course.id} className="px-5 py-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-1.5 h-16 rounded-full" style={{ backgroundColor: courseCategories[course.category]?.color }} />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs text-gray-400">{course.code}</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: courseCategories[course.category]?.bgColor, color: courseCategories[course.category]?.color }}>
+                          {courseCategories[course.category]?.name}
+                        </span>
+                      </div>
+                      <p className="font-semibold text-gray-900">{course.name}</p>
+                      <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                        <span>{course.credits}학점</span>
+                        <span>•</span>
+                        <span>{course.professor} 교수</span>
+                      </div>
+                      {course.location && (
+                        <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
+                          <Icon name="map-pin" className="w-3 h-3" />
+                          <span>{course.location}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <span className={`text-lg font-bold ${course.grade.startsWith('A') ? 'text-emerald-600' : 'text-blue-600'}`}>{course.grade}</span>
+                      <p className="text-xs text-gray-400 mt-1">{course.day} {course.time}</p>
+                    </div>
+                  </div>
                 </div>
-                <h4 className="font-bold text-gray-900">{course.name}</h4>
-                <p className="text-sm text-gray-500 mt-1">{course.credits}학점</p>
-                <p className="text-sm text-gray-600 mt-2 bg-gray-50 rounded-lg p-3">
-                  💡 {course.reason}
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-indigo-50 rounded-2xl p-5 border border-indigo-100">
+            <div className="flex items-start gap-3">
+              <Icon name="info" className="w-5 h-5 text-indigo-600" />
+              <div>
+                <h4 className="font-medium text-indigo-900">남은 이수 계획</h4>
+                <p className="text-sm text-indigo-700 mt-1">
+                  졸업까지 <strong>12학점</strong>이 더 필요합니다. 
+                  2026-1학기부터 매 학기 4학점씩 수강하시면 4학기 내 수료 가능합니다.
                 </p>
               </div>
             </div>
           </div>
-        ))}
-      </div>
-
-      <div className="bg-purple-50 rounded-2xl p-5 border border-purple-100">
-        <div className="flex items-start gap-3">
-          <Sparkles className="w-5 h-5 text-purple-600 mt-0.5" />
-          <div>
-            <h4 className="font-medium text-purple-900">수강한 과목 기반 추천</h4>
-            <p className="text-sm text-purple-700 mt-1">
-              AI융합연구방법론, 의료인공지능, 펨테크 인턴십을 수강하셨으므로 
-              헬스케어 AI 분야의 심화 과목과 논문연구를 병행하시는 것을 추천드립니다.
-            </p>
-          </div>
         </div>
-      </div>
-    </div>
-  );
+      );
 
-  // Chatbot Component
-  const Chatbot = () => (
-    <div className="fixed bottom-20 right-4 left-4 md:left-auto md:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 max-h-[70vh] flex flex-col">
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-            <MessageCircle className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-white">AI 어드바이저</h3>
-            <p className="text-xs text-white/70">학칙 & 졸업요건 상담</p>
-          </div>
-        </div>
-        <button onClick={() => setShowChatbot(false)} className="text-white/80 hover:text-white">
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-      
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[200px] max-h-[300px]">
-        {chatMessages.map((msg, idx) => (
-          <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] p-3 rounded-2xl ${
-              msg.role === 'user' 
-                ? 'bg-indigo-600 text-white rounded-br-sm' 
-                : 'bg-gray-100 text-gray-800 rounded-bl-sm'
-            }`}>
-              <p className="text-sm whitespace-pre-line">{msg.content}</p>
+      // Recommend Tab
+      const RecommendTab = () => (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <Icon name="brain" className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg">AI 수강 추천</h3>
+                <p className="text-sm text-white/70">현재 12학점 이수 기준 분석</p>
+              </div>
+            </div>
+            <div className="mt-4 p-3 bg-white/10 rounded-xl">
+              <p className="text-sm">💡 2026-1학기에 <strong>9~12학점</strong> 수강을 권장드립니다.</p>
             </div>
           </div>
-        ))}
-      </div>
-      
-      <div className="p-3 border-t bg-gray-50">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleChatSubmit()}
-            placeholder="궁금한 점을 물어보세요..."
-            className="flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          />
-          <button 
-            onClick={handleChatSubmit}
-            className="px-4 py-2.5 bg-indigo-600 rounded-xl text-white hover:bg-indigo-700 transition-colors"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="flex gap-2 mt-2 overflow-x-auto pb-1">
-          {['졸업요건', '자격시험', '남은 학점', '지도교수'].map(q => (
-            <button
-              key={q}
-              onClick={() => setChatInput(q)}
-              className="whitespace-nowrap text-xs px-3 py-1.5 bg-white border border-gray-200 rounded-full hover:bg-gray-100 transition-colors"
-            >
-              {q}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
 
-  // Tab content renderer
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'dashboard': return <DashboardTab />;
-      case 'courses': return <CoursesTab />;
-      case 'recommend': return <RecommendTab />;
-      default: return <DashboardTab />;
+          <div className="space-y-3">
+            {recommendedCourses.map((course, idx) => (
+              <div key={idx} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <div className="flex items-start gap-4">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${course.priority === 'high' ? 'bg-red-100' : 'bg-amber-100'}`}>
+                    <Icon name={course.priority === 'high' ? 'zap' : 'lightbulb'} className={`w-5 h-5 ${course.priority === 'high' ? 'text-red-600' : 'text-amber-600'}`} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs text-gray-400">{course.code}</span>
+                      <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: courseCategories[course.category]?.bgColor, color: courseCategories[course.category]?.color }}>
+                        {courseCategories[course.category]?.name}
+                      </span>
+                      {course.priority === 'high' && <span className="text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-600">필수 권장</span>}
+                    </div>
+                    <h4 className="font-bold text-gray-900">{course.name}</h4>
+                    <p className="text-sm text-gray-500 mt-1">{course.credits}학점</p>
+                    <p className="text-sm text-gray-600 mt-2 bg-gray-50 rounded-lg p-3">💡 {course.reason}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+
+      // Chatbot
+      const Chatbot = () => (
+        <div className="fixed bottom-20 right-4 left-4 md:left-auto md:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 flex flex-col" style={{ maxHeight: '70vh' }}>
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <Icon name="message-circle" className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white">AI 어드바이저</h3>
+                <p className="text-xs text-white/70">학칙 & 졸업요건 상담</p>
+              </div>
+            </div>
+            <button onClick={() => setShowChatbot(false)} className="text-white/80 hover:text-white">
+              <Icon name="x" className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ minHeight: '200px', maxHeight: '300px' }}>
+            {chatMessages.map((msg, idx) => (
+              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] p-3 rounded-2xl ${
+                  msg.role === 'user' ? 'bg-indigo-600 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm'
+                }`}>
+                  <p className="text-sm whitespace-pre-line">{msg.content}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="p-3 border-t bg-gray-50">
+            <div className="flex gap-2">
+              <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleChatSubmit()}
+                placeholder="궁금한 점을 물어보세요..."
+                className="flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <button onClick={handleChatSubmit} className="px-4 py-2.5 bg-indigo-600 rounded-xl text-white hover:bg-indigo-700">
+                <Icon name="chevron-right" className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex gap-2 mt-2 overflow-x-auto pb-1">
+              {['졸업요건', '자격시험', '남은 학점', '수강신청'].map(q => (
+                <button key={q} onClick={() => setChatInput(q)}
+                  className="whitespace-nowrap text-xs px-3 py-1.5 bg-white border border-gray-200 rounded-full hover:bg-gray-100">
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+
+      const renderTabContent = () => {
+        switch (activeTab) {
+          case 'dashboard': return <DashboardTab />;
+          case 'courses': return <CoursesTab />;
+          case 'recommend': return <RecommendTab />;
+          default: return <DashboardTab />;
+        }
+      };
+
+      return (
+        <div className="min-h-screen bg-gray-50">
+          {/* Header */}
+          <header className="bg-white/80 backdrop-blur-lg border-b border-gray-100 px-4 py-3 sticky top-0 z-40">
+            <div className="flex items-center justify-between max-w-lg mx-auto">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center">
+                  <Icon name="graduation-cap" className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <span className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">GradMate</span>
+                  <span className="text-xs text-gray-400 block" style={{ marginTop: '-4px' }}>CHA University</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200">
+                  <Icon name="bell" className="w-5 h-5 text-gray-600" />
+                </button>
+                <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center">
+                  <span className="text-sm font-bold text-indigo-600">성</span>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Main */}
+          <main className="max-w-lg mx-auto px-4 py-6 pb-28">
+            {renderTabContent()}
+          </main>
+
+          {/* Chat Button */}
+          {!showChatbot && (
+            <button onClick={() => setShowChatbot(true)}
+              className="fixed bottom-24 right-4 w-14 h-14 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl shadow-lg flex items-center justify-center text-white hover:shadow-xl z-40">
+              <Icon name="message-circle" className="w-6 h-6" />
+            </button>
+          )}
+
+          {showChatbot && <Chatbot />}
+
+          {/* Bottom Nav */}
+          <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-gray-100 z-40">
+            <div className="max-w-lg mx-auto flex">
+              {[
+                { id: 'dashboard', icon: 'activity', label: '대시보드' },
+                { id: 'courses', icon: 'book-open', label: '이수현황' },
+                { id: 'recommend', icon: 'sparkles', label: 'AI추천' },
+              ].map(tab => (
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 py-4 flex flex-col items-center gap-1 transition-colors ${
+                    activeTab === tab.id ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'
+                  }`}>
+                  <Icon name={tab.icon} className={`w-5 h-5 ${activeTab === tab.id ? 'stroke-2' : ''}`} />
+                  <span className="text-xs font-medium">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          </nav>
+        </div>
+      );
     }
-  };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-lg border-b border-gray-100 px-4 py-3 sticky top-0 z-40">
-        <div className="flex items-center justify-between max-w-lg mx-auto">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center">
-              <GraduationCap className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <span className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">GradMate</span>
-              <span className="text-[10px] text-gray-400 block -mt-1">CHA University</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-              <Bell className="w-5 h-5 text-gray-600" />
-            </button>
-            <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center">
-              <span className="text-sm font-bold text-indigo-600">성</span>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-lg mx-auto px-4 py-6 pb-28">
-        {renderTabContent()}
-      </main>
-
-      {/* Floating Chat Button */}
-      {!showChatbot && (
-        <button
-          onClick={() => setShowChatbot(true)}
-          className="fixed bottom-24 right-4 w-14 h-14 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl shadow-lg flex items-center justify-center text-white hover:shadow-xl transition-shadow z-40"
-        >
-          <MessageCircle className="w-6 h-6" />
-        </button>
-      )}
-
-      {/* Chatbot */}
-      {showChatbot && <Chatbot />}
-
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-gray-100 z-40">
-        <div className="max-w-lg mx-auto flex">
-          {[
-            { id: 'dashboard', icon: Activity, label: '대시보드' },
-            { id: 'courses', icon: BookOpen, label: '이수현황' },
-            { id: 'recommend', icon: Sparkles, label: 'AI추천' },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-4 flex flex-col items-center gap-1 transition-colors ${
-                activeTab === tab.id ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'
-              }`}
-            >
-              <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'stroke-2' : ''}`} />
-              <span className="text-xs font-medium">{tab.label}</span>
-              {activeTab === tab.id && (
-                <div className="absolute bottom-0 w-12 h-0.5 bg-indigo-600 rounded-full" />
-              )}
-            </button>
-          ))}
-        </div>
-      </nav>
-    </div>
-  );
-}
+    ReactDOM.createRoot(document.getElementById('root')).render(<ChaGradMate />);
+  </script>
+</body>
+</html>
