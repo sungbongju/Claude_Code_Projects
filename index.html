@@ -55,9 +55,10 @@
     // 실제 이수 과목 데이터 (2025학년도 2학기)
     const sampleCourses = [
       { id: 1, code: 'AIH701', name: 'AI융합연구방법론', credits: 3, category: 'common', semester: '2025-2', grade: 'A+', professor: '박대근', location: '미래관316', day: '목', time: '09:00' },
-      { id: 2, code: 'AIH702', name: 'AI응용사례연구Ⅰ', credits: 3, category: 'elective', semester: '2025-2', grade: 'A0', professor: '정경인', location: '', day: '금', time: '10:00' },
-      { id: 3, code: 'AIH703', name: '펨테크디지털헬스케어 인턴십', credits: 3, category: 'research', semester: '2025-2', grade: 'A+', professor: '한현욱', location: '', day: '월', time: '12:00' },
+      { id: 2, code: 'AIH702', name: 'AI응용사례연구Ⅰ', credits: 2, category: 'elective', semester: '2025-2', grade: 'A0', professor: '정경인', location: '', day: '금', time: '10:00' },
+      { id: 3, code: 'AIH703', name: '펨테크디지털헬스케어 인턴십', credits: 1, category: 'research', semester: '2025-2', grade: 'P', professor: '한현욱', location: '', day: '월', time: '12:00', isPassFail: true },
       { id: 4, code: 'AIH704', name: '의료인공지능', credits: 3, category: 'required', semester: '2025-2', grade: 'A0', professor: '조백환', location: '차바이오컴플렉스B205', day: '수', time: '13:00' },
+      { id: 5, code: 'AIH705', name: '인공지능을 활용한 시계열 예측', credits: 3, category: 'elective', semester: '2025-2', grade: 'A+', professor: '박대근', location: '미래관509', day: '목', time: '13:00' },
     ];
 
     // 학사일정
@@ -367,7 +368,10 @@
                       )}
                     </div>
                     <div className="text-right">
-                      <span className={`text-lg font-bold ${course.grade.startsWith('A') ? 'text-emerald-600' : 'text-blue-600'}`}>{course.grade}</span>
+                      <span className={`text-lg font-bold ${
+                        course.grade === 'P' ? 'text-purple-600' :
+                        course.grade.startsWith('A') ? 'text-emerald-600' : 'text-blue-600'
+                      }`}>{course.grade}{course.isPassFail && <span className="text-xs ml-1">(P/F)</span>}</span>
                       <p className="text-xs text-gray-400 mt-1">{course.day} {course.time}</p>
                     </div>
                   </div>
